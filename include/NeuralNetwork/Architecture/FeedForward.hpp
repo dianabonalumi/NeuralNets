@@ -16,10 +16,19 @@ private:
     std::shared_ptr<Loss<T>> loss;
 
 public:
-    FeedForward(const std::vector<std::shared_ptr<Layer<T>>>, const std::shared_ptr<Loss<T>>);
+    FeedForward(const std::vector<std::shared_ptr<Layer<T>>>, const std::shared_ptr<Loss<T>>) 
+    : layers(layers), loss(loss) {
 
-    void Train(const Matrix<T>);
-    Matrix<T> Eval(const Matrix<T>);
+    }
+
+    void Train(const Matrix<T> X) {
+
+    }
+
+    Matrix<T> Eval(const Matrix<T> X) {
+        // Eval implementation for FeedForward
+        return X;
+    }
 };
 
 #endif

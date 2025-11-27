@@ -9,11 +9,21 @@ private:
     int in, out;
     Matrix<T> weights;
 public:
-    Dense(int, int);
-    Dense(int, int, const Matrix<T>);
+    Dense(int, int) {
 
-    Matrix<T> Forward(const Matrix<T>);
-    Matrix<T> Backward(const Matrix<T>);
+    }
+    Dense(int, int, const Matrix<T>) {
+
+    }
+
+    Matrix<T> Forward(const Matrix<T> X) {
+        // Dense forward pass
+        return X;
+    }
+    Matrix<T> Backward(const Matrix<T> grad) {
+        // Dense backward pass
+        return grad;
+    }
 };
 
 #endif

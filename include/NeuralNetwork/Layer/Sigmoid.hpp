@@ -6,8 +6,15 @@
 template <typename T>
 class Sigmoid : public Layer<T> {
 public:
-    Matrix<T> Forward(const Matrix<T>);
-    Matrix<T> Backward(const Matrix<T>);
+    Matrix<T> Forward(const Matrix<T> X) {
+        // Sigmoid forward pass
+        return X;
+    }
+
+    Matrix<T> Backward(const Matrix<T> grad) {
+        // Sigmoid backward pass
+        return grad;
+    }
 };
 
 #endif
