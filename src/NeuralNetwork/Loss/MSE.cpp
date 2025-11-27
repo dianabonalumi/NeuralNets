@@ -9,7 +9,7 @@ Matrix<T> MSE<T>::Compute(const Matrix<T> X) {
 template <typename T>
 Matrix<T> MSE<T>::Gradient() {
     // Computation of MSE gradient
-    return Matrix<T>(2);
+    return Matrix<T>(2,2);
 }
 
 template class MSE<double>;

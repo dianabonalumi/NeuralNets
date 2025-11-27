@@ -3,9 +3,7 @@
 template <typename T>
 Matrix<T> Sigmoid<T>::Forward(const Matrix<T> X) {
     // Sigmoid forward pass
-    Matrix<T> K = X;
-    K[0] -= 1;
-    return K;
+    return X;
 }
 
 template <typename T>
