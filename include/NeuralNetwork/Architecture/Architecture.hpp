@@ -6,8 +6,8 @@
 template<typename T>
 class Architecture {
 public:
-    virtual void Train(const std::vector<T>) = 0;
-    virtual const std::vector<T> Eval(const std::vector<T>) = 0;
+    virtual void Train(const Matrix<T>) = 0;
+    virtual Matrix<T> Eval(const Matrix<T>) = 0;
 };
 
 #endif

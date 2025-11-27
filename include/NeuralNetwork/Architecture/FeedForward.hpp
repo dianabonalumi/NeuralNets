@@ -19,7 +19,7 @@ public:
     FeedForward(const std::vector<std::shared_ptr<Layer<T>>>, const std::shared_ptr<Loss<T>>);
 
     void Train(const Matrix<T>);
-    const Matrix<T> Eval(const Matrix<T>);
+    Matrix<T> Eval(const Matrix<T>);
 };
 
 #endif

@@ -10,7 +10,7 @@ void FeedForward<T>::Train(const Matrix<T> X) {
 }
 
 template<typename T>
-const Matrix<T> FeedForward<T>::Eval(const Matrix<T> X) {
+Matrix<T> FeedForward<T>::Eval(const Matrix<T> X) {
     // Eval implementation for FeedForward
     return X;
 }
