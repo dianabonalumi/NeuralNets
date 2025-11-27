@@ -9,7 +9,7 @@
 #include <memory>
 
 // To compile, from directory neuralnets-1-neuralnets/
-// g++ src/main.cpp src/NeuralNetwork/Loss/MSE.cpp src/NeuralNetwork/Layer/* src/NeuralNetwork/Architecture/FeedForward.cpp -o main
+// g++ src/main.cpp -o main
 
 // Notes:
 // For polymorphism pointers have to be used
