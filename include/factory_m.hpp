@@ -6,11 +6,13 @@
 
 // Includi qui i vari solver separati
 #include "solvers/naive_solver.hpp"
+#include "solvers/loop_unroll_solver.hpp"
 
 // #include "solvers/BlockedSolver.hpp" ...
 enum class SolverType {
     NAIVE,
     SIMD,
+    UNROLL,
     BLOCKED,
     OPENMP
 };
@@ -22,6 +24,9 @@ public:
         switch (type) {
             case SolverType::NAIVE:
                 return std::make_unique<Naive_Solver<T>>();
+
+            case SolverType::UNROLL:
+                return std::make_unique<Loop_Unroll_Solver<T>>();
             
  
 

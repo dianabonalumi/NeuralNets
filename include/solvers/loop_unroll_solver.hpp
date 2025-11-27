@@ -7,7 +7,6 @@ template <typename T>
 class Loop_Unroll_Solver : public Matrix_Solver<T> {
 public:
     void multiply(int M, int N, int K, const T* A, const T* B, T* C) override {
-        // Implementation of dei 3 FOR cycles
         for (int i = 0; i < M; ++i) {
             for (int j = 0; j < N; ++j) {
                 T sum = 0;

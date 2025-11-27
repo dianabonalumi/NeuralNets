@@ -55,7 +55,7 @@ int main() {
     // 2. CREAZIONE DEL SOLVER (FACTORY)
     // Qui chiediamo esplicitamente il NAIVE, oppure non passiamo nulla (default)
     std::cout << "-> Creazione del Solver tramite Factory...\n";
-    auto solver = SolverFactory<float>::createSolver(SolverType::NAIVE);
+    auto solver = SolverFactory<float>::createSolver(SolverType::UNROLL);
 
     if (!solver) {
         std::cerr << "Errore: Impossibile creare il solver!\n";
