@@ -3,12 +3,16 @@
 
 #include "Loss.hpp"
 
+#include <memory>
+
 template <typename T>
 class MSE : public Loss<T> {
 private:
     Matrix<T> lastX;
 
 public:
+    MSE(std::shared_ptr<Matrix_Solver<T>> solver): Loss<T>(solver) {}
+
     Matrix<T> Compute(const Matrix<T> X) {
         // Computation of MSE loss
         return X;
