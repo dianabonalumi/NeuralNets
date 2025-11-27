@@ -96,38 +96,49 @@ public:
         }
     }
 
+    // In BenchmarkSuite.hpp
 
-    // Aggiungi questo metodo nella classe BenchmarkSuite
 void runScalabilityTest(int max_n, SolverType type) {
-    std::cout << "Size,Time_ms,GFLOPs\n"; // Header del CSV
+    // 1. HEADER CSV AGGIORNATO: Aggiungiamo le colonne per BLAS
+    std::cout << "Size,Time_Mine,GFLOPs_Mine,Time_Blas,GFLOPs_Blas\n"; 
 
-    // Testiamo dimensioni crescenti: 128, 256, 512, ... fino a max_n
-    for (int n = 128; n <= max_n; n *= 2) {
+    // Incremento lineare (es. +64 o +128) per avere grafici fluidi
+    for (int n = 128; n <= max_n; n += 128) {
         
-        // Setup dati
+        // Setup Dati
         std::vector<T> A(n * n);
         std::vector<T> B(n * n);
-        std::vector<T> C(n * n);
+        std::vector<T> C_mine(n * n);
+        std::vector<T> C_blas(n * n);
         randomInit(A); randomInit(B);
 
+        // --- MISURA IL TUO SOLVER ---
         auto solver = SolverFactory<T>::createSolver(type);
+        auto start_mine = std::chrono::high_resolution_clock::now();
+        solver->multiply(n, n, n, A.data(), B.data(), C_mine.data());
+        auto end_mine = std::chrono::high_resolution_clock::now();
         
-        auto start = std::chrono::high_resolution_clock::now();
-        solver->multiply(n, n, n, A.data(), B.data(), C.data());
-        auto end = std::chrono::high_resolution_clock::now();
-        
-        double duration = std::chrono::duration<double>(end - start).count(); // in secondi
-        double ms = duration * 1000.0;
-        
-        // Calcolo GFLOPs (Miliardi di operazioni al secondo)
-        // Formula per matrici: 2 * N^3
-        double gflops = (2.0 * std::pow(n, 3)) / (duration * 1e9);
+        double duration_mine = std::chrono::duration<double>(end_mine - start_mine).count();
+        double ms_mine = duration_mine * 1000.0;
+        double gflops_mine = (2.0 * std::pow(n, 3)) / (duration_mine * 1e9);
 
-        // Stampa riga CSV: Dimensione, Tempo, Performance
-        std::cout << n << "," << ms << "," << gflops << "\n";
-    }
+        // --- MISURA OPENBLAS (BASELINE) ---
+        auto start_blas = std::chrono::high_resolution_clock::now();
+        call_openblas<T>(n, n, n, A.data(), B.data(), C_blas.data());
+        auto end_blas = std::chrono::high_resolution_clock::now();
 
+        double duration_blas = std::chrono::duration<double>(end_blas - start_blas).count();
+        double ms_blas = duration_blas * 1000.0;
+        double gflops_blas = (2.0 * std::pow(n, 3)) / (duration_blas * 1e9);
+
+        // --- STAMPA CSV COMPLETO ---
+        // Formato: Size, TuoTempo, TuoiGflops, BlasTempo, BlasGflops
+        std::cout << n << "," 
+                  << ms_mine << "," << gflops_mine << ","
+                  << ms_blas << "," << gflops_blas << "\n";
     }
+}
+
 };
 
 

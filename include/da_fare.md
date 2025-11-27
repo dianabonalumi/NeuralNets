@@ -1,0 +1,4 @@
+SIMD
+OMP
+
+SIMD + Unrolling

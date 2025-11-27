@@ -16,3 +16,6 @@ For each solver implementation, a detailed report must be included. Please adher
 The goal of this documentation is to:
 * Track the design process and architectural decisions.
 * Facilitate the understanding of the codebase for current and future implementers.
+
+## reminder
+* compare float and double behavior

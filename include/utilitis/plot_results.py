@@ -3,70 +3,104 @@ import matplotlib.pyplot as plt
 import subprocess
 import io
 import sys
+import os
 
-# Configurazione
-solver_name = "Naive"
-executable = "./benchmark_test"
+executable = "./benchmark_test" 
+if len(sys.argv) < 3:
+    print("ERRORE: Devi specificare solver e precisione.")
+    print("Uso: python3 plot_results.py <solver> <precision>")
+    print("Es:  python3 plot_results.py simd float")
+    sys.exit(1)
 
-# --- ESECUZIONE DEL C++ ---
-print(f"Eseguendo benchmark per {solver_name}...")
-result = subprocess.run([executable], capture_output=True, text=True)
+solver_name = sys.argv[1]    # es. "simd"
+precision = sys.argv[2]      # es. "float"
+full_name = f"{solver_name}_{precision}" 
+
+print(f"--- [PYTHON] Avvio Benchmark: {solver_name.upper()} ({precision.upper()}) ---")
+try:
+    result = subprocess.run(
+        [executable, solver_name, precision], 
+        capture_output=True, 
+        text=True, 
+        check=True 
+    )
+except subprocess.CalledProcessError as e:
+    print("ERRORE DURANTE L'ESECUZIONE DEL C++:")
+    print(e.stderr)
+    sys.exit(1)
+except FileNotFoundError:
+    print(f"ERRORE: Non trovo l'eseguibile '{executable}'. Hai compilato?")
+    sys.exit(1)
+
 raw_output = result.stdout
 
-# --- DEBUG: Vediamo cosa ha stampato il C++ ---
-#print("--- OUTPUT RICEVUTO DAL C++ ---")
-#print(raw_output)
-#print("-------------------------------")
-
-# --- PULIZIA E LETTURA DATI ---
-# Filtriamo le righe: teniamo solo quelle che contengono virgole e sembrano numeri o l'header
-csv_lines = []
 for line in raw_output.splitlines():
-    # Cerca l'header o righe di dati (es: "128,45.2,1.5")
-    if "Size,Time" in line or ("," in line and line[0].isdigit()):
+    if "Size,Time" in line or (line and line[0].isdigit() and "," in line):
         csv_lines.append(line)
 
 clean_csv_data = "\n".join(csv_lines)
 
 if not clean_csv_data:
-    print("ERRORE: Non ho trovato dati validi nel CSV!")
+    print("ERRORE: Nessun dato valido ricevuto dal C++.")
+    print("Output grezzo ricevuto:\n", raw_output)
     sys.exit(1)
 
 try:
     df = pd.read_csv(io.StringIO(clean_csv_data))
-    # Rimuoviamo eventuali spazi vuoti dai nomi delle colonne
-    df.columns = df.columns.str.strip() 
+    df.columns = df.columns.str.strip()
 except Exception as e:
-    print(f"Errore nella lettura del CSV: {e}")
+    print(f"ERRORE nella lettura del CSV: {e}")
     sys.exit(1)
 
-# Verifica che le colonne esistano
-if "Size" not in df.columns:
-    print(f"ERRORE: Colonne trovate: {df.columns}")
-    print("Mi aspettavo 'Size' ma non c'è. Controlla l'output sopra.")
-    sys.exit(1)
+print(f"--- Generazione grafici per {full_name} ---")
 
-# --- GRAFICI (Il resto rimane uguale) ---
-print("Generazione grafici...")
+if not os.path.exists("plots"):
+    os.makedirs("plots")
 
-# Grafico Tempo
-plt.figure(figsize=(10, 5))
-plt.plot(df["Size"], df["Time_ms"], marker='o', label=f"{solver_name}")
+plt.figure(figsize=(10, 6))
+
+if "Time_Mine" in df.columns:
+    plt.plot(df["Size"], df["Time_Mine"], marker='o', linewidth=2, label=f"My Solver ({full_name})")
+elif "Time_ms" in df.columns: 
+    plt.plot(df["Size"], df["Time_ms"], marker='o', linewidth=2, label=f"My Solver ({full_name})")
+
+if "Time_Blas" in df.columns:
+    plt.plot(df["Size"], df["Time_Blas"], linestyle='--', color='black', alpha=0.7, label="OpenBLAS")
+
 plt.xlabel("Matrix Size (N)")
 plt.ylabel("Time (ms)")
-plt.title("Matrix Multiplication Performance")
-plt.grid(True)
+plt.title(f"Performance Analysis: {solver_name} ({precision})")
 plt.legend()
-plt.savefig("time_plot.png")
-print("-> time_plot.png salvato")
+plt.grid(True, alpha=0.3)
 
-# Grafico GFLOPs
-plt.figure(figsize=(10, 5))
-plt.plot(df["Size"], df["GFLOPs"], marker='s', color='red', label=f"{solver_name}")
+file_time = f"plots/time_{full_name}.png"
+plt.savefig(file_time)
+print(f"-> Grafico Tempo salvato in: {file_time}")
+
+plt.figure(figsize=(10, 6))
+
+if "GFLOPs_Mine" in df.columns:
+    plt.plot(df["Size"], df["GFLOPs_Mine"], marker='s', linewidth=2, color='red', label=f"My Solver ({full_name})")
+elif "GFLOPs" in df.columns:
+    plt.plot(df["Size"], df["GFLOPs"], marker='s', linewidth=2, color='red', label=f"My Solver ({full_name})")
+
+if "GFLOPs_Blas" in df.columns:
+    plt.plot(df["Size"], df["GFLOPs_Blas"], linestyle='--', color='black', alpha=0.7, label="OpenBLAS")
+
 plt.xlabel("Matrix Size (N)")
 plt.ylabel("GFLOPs (Higher is better)")
-plt.title("Computation Throughput")
-plt.grid(True)
+plt.title(f"Throughput Analysis: {solver_name} ({precision})")
 plt.legend()
-plt.savefig("gflops_plot.png")
-print("-> gflops_plot.png salvato")
+plt.grid(True, alpha=0.3)
+
+file_gflops = f"plots/gflops_{full_name}.png"
+plt.savefig(file_gflops)
+print(f"-> Grafico GFLOPs salvato in: {file_gflops}")
+
+
+
+
+
+
+
+

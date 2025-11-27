@@ -16,11 +16,11 @@ g++ -std=c++17 -O3 mainT.cpp
 -fopenmp
 
 3)
-./benchmark_test
+./benchmark_test tiposolver(tutto piccolo) tipo_dato(float/double)
 
 
 export OMP_NUM_THREADS= #numero di thread desiderato
-./benchmark_test
+./benchmark_test tipo_solver tipo_dato
 
 
 ### Possibili automazioni
@@ -36,7 +36,7 @@ g++ -std=c++17 -O3 src/main.cpp -o benchmark_test \
 echo "============================================"
 echo "      TEST STRONG SCALABILITY (N=1024)      "
 echo "============================================"
-echo "Threads | Tempo (ms) | Speedup"
+echo "Threads | Tempo (ms) | Speedup
 echo "--------------------------------------------"
 
 # Variabile per salvare il tempo base (1 thread)
