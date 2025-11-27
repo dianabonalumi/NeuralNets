@@ -7,9 +7,12 @@
 #include <iostream>
 
 #include <memory>
+#include <utility>
+
+#include "../include/factory_m.hpp"
 
 // To compile, from directory neuralnets-1-neuralnets/
-// g++ src/main.cpp -o main
+// g++ src/main.cpp -mavx -mfma -mavx2 -o main
 
 // Notes:
 // For polymorphism pointers have to be used
@@ -37,18 +40,19 @@ int main() {
     // Verify that the external array was modified
     std::cout << "External data[4] is now: " << external_data[4] << std::endl; 
 
+    std::shared_ptr solver = std::move(SolverFactory<double>::createSolver());  // needed to share the ptr
 
-    std::shared_ptr<Loss<double>> mse = std::make_shared<MSE<double>>();
+    std::shared_ptr<Loss<double>> mse = std::make_shared<MSE<double>>(solver);
 
     Matrix<double> test = mse->Compute(m);
     std::cout << test.Get(0,0) << std::endl;
 
-    std::shared_ptr<Layer<double>> dense = std::make_shared<Dense<double>>(1, 1);
+    std::shared_ptr<Layer<double>> dense = std::make_shared<Dense<double>>(solver, 1, 1);
     test = dense->Forward(m);
 
     std::cout << test.Get(0,0) << std::endl;
 
-    std::shared_ptr<Layer<double>> sigm = std::make_shared<Sigmoid<double>>();
+    std::shared_ptr<Layer<double>> sigm = std::make_shared<Sigmoid<double>>(solver);
     test = sigm->Forward(m);
 
     std::cout << test.Get(0,0) << std::endl;
