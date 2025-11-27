@@ -1,0 +1,131 @@
+\documentclass[aspectratio=169, 11pt]{beamer}
+
+% --- SETUP ESTETICO (CLEAN DESIGN) ---
+\usetheme{Madrid}
+\usecolortheme{seahorse} 
+\usefonttheme{structurebold} 
+
+% Rimuovi navigazione e footline per pulizia
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{}
+
+% Pacchetti
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{caption}
+
+% Metadati
+\title{Scalability Analysis: OpenMP Implementation}
+\subtitle{Multithreading Overhead \& Bandwidth Saturation}
+\author{Progetto AMSC}
+\date{\today}
+
+\begin{document}
+
+% --- SLIDE TITOLO ---
+\begin{frame}
+    \titlepage
+\end{frame}
+
+% --- SLIDE 1: CONFRONTO VISIVO ---
+\begin{frame}{Performance Overview: OpenMP (Float)}
+    \begin{columns}[T]
+        % Grafico Tempo
+        \begin{column}{0.48\textwidth}
+            \centering
+            \includegraphics[width=\textwidth, height=0.55\textheight, keepaspectratio]{time_omp_float.png}
+            \captionof{figure}{\textbf{Execution Time (ms)}}
+            \small{\textit{Significant instability (spikes) due to thread synchronization overhead.}}
+        \end{column}
+        
+        % Grafico GFLOPS
+        \begin{column}{0.48\textwidth}
+            \centering
+            \includegraphics[width=\textwidth, height=0.55\textheight, keepaspectratio]{gflops_omp_float.png}
+            \captionof{figure}{\textbf{Throughput (GFLOPS)}}
+            \small{\textit{Throughput is unstable and surprisingly lower than SIMD.}}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% --- SLIDE 2: CONFRONTO FLOAT VS DOUBLE ---
+\begin{frame}{Quantitative Analysis: Float vs Double}
+    \begin{columns}
+        % Tabella
+        \begin{column}{0.55\textwidth}
+            \centering
+            \textbf{Impact of Precision on Multithreading}
+            \vspace{0.2cm}
+            
+            \renewcommand{\arraystretch}{1.3}
+            \small
+            \begin{tabular}{l r r r}
+                \toprule
+                \textbf{Size ($N$)} & \textbf{Float} & \textbf{Double} & \textbf{$\Delta$ Overhead} \\
+                \midrule
+                $128^3$ & 28.7 ms & 25.7 ms & \textcolor{green!50!black}{-10\% (Noise)} \\
+                $1024^3$ & 1.24 s & 1.48 s & \textcolor{orange}{+19\%} \\
+                $1536^3$ & \alert{3.51 s} & \alert{5.06 s} & \textcolor{red}{\textbf{Huge Spike}} \\
+                $2048^3$ & 14.39 s & 16.27 s & \textcolor{orange}{+13\%} \\
+                \bottomrule
+            \end{tabular}
+        \end{column}
+
+        % Analisi Testuale
+        \begin{column}{0.42\textwidth}
+             \begin{block}{The "Parallelizing Garbage" Trap}
+                \small
+                Compared to Naive (47s), OMP is faster (14s, $\approx$ 3.3x speedup).
+                
+                \vspace{0.2cm}
+                \textbf{BUT it is slower than SIMD (1.07s)!}
+                
+                \vspace{0.2cm}
+                Why? We are parallelizing the inefficient \textit{Naive} logic. 
+                Running 8 threads that all experience Cache Misses just saturates the Memory Bus 8 times faster.
+            \end{block}
+        \end{column}
+    \end{columns}
+    
+    \vspace{0.3cm}
+    \centering
+    \footnotesize \textbf{Key Takeaway:} More cores cannot fix bad memory access patterns.
+\end{frame}
+
+% --- SLIDE 3: DIAGNOSI TECNICA ---
+\begin{frame}{Why is OpenMP slower than SIMD?}
+    \begin{columns}
+        \begin{column}{0.6\textwidth}
+            Simply adding \texttt{\#pragma omp parallel for} does not magically solve architecture bottlenecks:
+            
+            \vspace{0.3cm}
+            \begin{itemize}
+                \setlength\itemsep{1em}
+                \item \textbf{Memory Bandwidth Saturation:} 
+                Since the code is not blocked (tiled), every thread constantly fetches data from RAM. The shared memory bus becomes a traffic jam.
+                
+                \item \textbf{False Sharing / Cache Contention:} 
+                Multiple cores trying to access the same cache lines or evicting each other's data (Cache Pollution).
+                
+                \item \textbf{Thread Overhead:} 
+                For smaller $N$ (or efficient $N$), the cost of spawning and syncing threads outweighs the compute benefits (evident in the spikes).
+            \end{itemize}
+        \end{column}
+        
+        \begin{column}{0.35\textwidth}
+            \centering
+            \setbeamercolor{block body}{bg=orange!10,fg=black}
+            \begin{block}{Bottleneck Shift}
+                \centering
+                \textbf{Naive:} CPU Waiting for RAM.\\
+                \vspace{0.2cm}
+                $\downarrow$\\
+                \vspace{0.2cm}
+                \textbf{OpenMP:} \textit{Multiple} CPUs Fighting for the \textit{Same} RAM Channel.
+            \end{block}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\end{document}

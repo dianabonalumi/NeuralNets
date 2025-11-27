@@ -10,15 +10,18 @@
 #include "solvers/openmp_solver.hpp"
 #include "solvers/loop_unroll_solver.hpp"
 #include "solvers/tiling_solver.hpp"
+#include "solvers/simd_unroll_solver_2D.hpp"
+#include "solvers/simd_unroll_solver.hpp"
 
 
-// #include "solvers/BlockedSolver.hpp" ...
 enum class SolverType {
     NAIVE,
     SIMD,
     UNROLL,
     TILING,
-    OPENMP
+    OPENMP,
+    SIMD_UNROLL_1D,
+    SIMD_UNROLL_2D
 };
 
 template <typename T>
@@ -30,22 +33,26 @@ public:
             case SolverType::NAIVE:
                 return std::make_unique<Naive_Solver<T>>();
 
-<<<<<<< HEAD
+
             case SolverType::SIMD:
                 return std::make_unique<Simd_Solver<T>>();
 
             case SolverType::OPENMP:
                     return std::make_unique<OpenMP_Solver<T>>();
-=======
+
             case SolverType::UNROLL:
                 return std::make_unique<Loop_Unroll_Solver<T>>();
 
             case SolverType::TILING:
                 return std::make_unique<Tiling_Solver<T>>();
->>>>>>> main
-            
- 
 
+            case SolverType::SIMD_UNROLL_1D:
+                return std::make_unique<Simd_Unroll_Solver<T>>();
+
+            case SolverType::SIMD_UNROLL_2D:
+                return std::make_unique<Simd_Unroll_Solver_2D<T>>();
+ 
+            
             default:
                 return std::make_unique<Naive_Solver<T>>();
         }

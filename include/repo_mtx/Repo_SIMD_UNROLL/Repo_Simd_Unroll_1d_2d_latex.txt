@@ -1,0 +1,221 @@
+\documentclass[aspectratio=169, 11pt]{beamer}
+
+% --- SETUP ESTETICO ---
+\usetheme{Madrid}
+\usecolortheme{seahorse} 
+\usefonttheme{structurebold} 
+
+% Rimuovi elementi di disturbo
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{}
+
+% Pacchetti
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{amsmath}
+
+% Metadati
+\title{Optimization Strategies: Loop Unrolling \& Register Blocking}
+\subtitle{SIMD 1D vs SIMD 2D (Register Blocking)}
+\author{Progetto AMSC}
+\date{\today}
+
+\begin{document}
+
+% --- TITOLO ---
+\begin{frame}
+    \titlepage
+\end{frame}
+
+% ==========================================
+% SEZIONE 1: SIMD 1D UNROLLING
+% ==========================================
+\section{SIMD 1D Unrolling}
+
+\begin{frame}{Part 1: SIMD 1D Unrolling Overview}
+    \begin{columns}[T]
+        % Grafico Tempo
+        \begin{column}{0.48\textwidth}
+            \centering
+            \includegraphics[width=\textwidth, height=0.55\textheight, keepaspectratio]{time_simd_unrolling_float.png}
+            \captionof{figure}{\textbf{Execution Time (1D)}}
+            \small{\textit{Linear scaling, but limited by memory bandwidth.}}
+        \end{column}
+        
+        % Grafico GFLOPS
+        \begin{column}{0.48\textwidth}
+            \centering
+            \includegraphics[width=\textwidth, height=0.55\textheight, keepaspectratio]{gflops_simd_unrolling_float.png}
+            \captionof{figure}{\textbf{Throughput (1D)}}
+            \small{\textit{Performance caps at $\approx$ 15 GFLOPS for large N.}}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{1D Unrolling: Quantitative Analysis}
+    \begin{columns}
+        \begin{column}{0.55\textwidth}
+            \centering
+            \textbf{1D Unrolling Performance (Float vs Double)}
+            \vspace{0.2cm}
+            
+            \renewcommand{\arraystretch}{1.3}
+            \small
+            \begin{tabular}{l r r r}
+                \toprule
+                \textbf{Size ($N$)} & \textbf{Float} & \textbf{Double} & \textbf{Gap} \\
+                \midrule
+                $128^3$ & 0.16 ms & 0.30 ms & +80\% \\
+                $1024^3$ & 75.87 ms & 160.20 ms & +111\% \\
+                $1536^3$ & 255.82 ms & 1.07 s & +317\% \\
+                $2048^3$ & \textbf{1.10 s} & \textbf{3.00 s} & \textcolor{red}{\textbf{2.7x Slower}} \\
+                \bottomrule
+            \end{tabular}
+        \end{column}
+
+        \begin{column}{0.42\textwidth}
+             \begin{block}{Observation}
+                1D Unrolling reduces loop overhead compared to basic SIMD, but it hits the \textbf{Memory Wall} early.
+                
+                \vspace{0.2cm}
+                At $N=2048$, the CPU spends more time fetching matrix $B$ from RAM than computing, limiting the Float throughput to $\approx 15.6$ GFLOPS.
+            \end{block}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% ==========================================
+% SEZIONE 2: SIMD 2D UNROLLING
+% ==========================================
+\section{SIMD 2D Unrolling}
+
+\begin{frame}{Part 2: SIMD 2D Unrolling (Register Blocking)}
+    \begin{columns}[T]
+        % Grafico Tempo
+        \begin{column}{0.48\textwidth}
+            \centering
+            \includegraphics[width=\textwidth, height=0.55\textheight, keepaspectratio]{time_simd_unroll_2d_float.png}
+            \captionof{figure}{\textbf{Execution Time (2D)}}
+            \small{\textit{Significant speedup observed at large N.}}
+        \end{column}
+        
+        % Grafico GFLOPS
+        \begin{column}{0.48\textwidth}
+            \centering
+            \includegraphics[width=\textwidth, height=0.55\textheight, keepaspectratio]{gflops_simd_unroll_2d_float.png}
+            \captionof{figure}{\textbf{Throughput (2D)}}
+            \small{\textit{Higher sustained throughput ($\approx 23.5$ GFLOPS).}}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{2D Unrolling: Quantitative Analysis}
+    \begin{columns}
+        \begin{column}{0.55\textwidth}
+            \centering
+            \textbf{2D Unrolling Performance (Float vs Double)}
+            \vspace{0.2cm}
+            
+            \renewcommand{\arraystretch}{1.3}
+            \small
+            \begin{tabular}{l r r r}
+                \toprule
+                \textbf{Size ($N$)} & \textbf{Float} & \textbf{Double} & \textbf{Gap} \\
+                \midrule
+                $128^3$ & 0.13 ms & 0.26 ms & +100\% \\
+                $1024^3$ & 68.68 ms & 137.71 ms & +100\% \\
+                $2048^3$ & \textbf{0.73 s} & \textbf{1.86 s} & \textcolor{red}{\textbf{2.5x Slower}} \\
+                \bottomrule
+            \end{tabular}
+            
+            \vspace{0.3cm}
+            \footnotesize
+            \textcolor{blue}{\textbf{Speedup vs 1D (Float):}} $1.10s \to 0.73s$ (\textbf{+50\% Faster})
+        \end{column}
+
+        \begin{column}{0.42\textwidth}
+             \begin{block}{The Impact of Register Blocking}
+                By processing blocks of data, we improve \textbf{Arithmetic Intensity}.
+                
+                \vspace{0.2cm}
+                We achieve $\approx 23.5$ GFLOPS (Float) vs 15.6 GFLOPS (1D). The CPU is utilized much more efficiently because it waits less for memory.
+            \end{block}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% ==========================================
+% SEZIONE 3: CONFRONTO TEORICO
+% ==========================================
+\section{Architectural Comparison}
+
+\begin{frame}{Optimization Strategy: 1D Unrolling (Horizontal)}
+    \begin{columns}
+        \begin{column}{0.6\textwidth}
+            \textbf{Mechanism:}
+            For each scalar element $A_{i,k}$, we load a "horizontal strip" of $B$ and update a corresponding strip of $C$.
+            
+            \vspace{0.2cm}
+            \begin{itemize}
+                \item \textbf{Loads:} 1 Scalar ($A$) + $N$ Vectors ($B$).
+                \item \textbf{Compute:} Update $N$ accumulators in $C$ (same row).
+            \end{itemize}
+
+            \vspace{0.3cm}
+            \textbf{Pros \& Cons:}
+            \begin{itemize}
+                \item[\textcolor{green!50!black}{\textbf{+}}] \textbf{Easy to implement:} Only requires unrolling the innermost loop ($j$).
+                \item[\textcolor{green!50!black}{\textbf{+}}] \textbf{Low Register Pressure:} Uses few registers (1 for A, 4-8 for C).
+                \item[\textcolor{red}{\textbf{-}}] \textbf{Bandwidth Waste:} For every new row of $C$, we must reload the entire matrix $B$. The CPU spends cycles waiting for loads.
+            \end{itemize}
+        \end{column}
+        
+        \begin{column}{0.35\textwidth}
+            \centering
+            \setbeamercolor{block body}{bg=gray!10,fg=black}
+            \begin{block}{1D Pattern}
+                \centering
+                \small $C[i][j \dots j+4] +=$\\
+                $A[i][k] \times B[k][j \dots j+4]$
+            \end{block}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Optimization Strategy: 2D Register Blocking (Pro Level)}
+    \begin{columns}
+        \begin{column}{0.6\textwidth}
+            \textbf{Mechanism:}
+            We process a block of rows (e.g., 2 rows of $A$) simultaneously. We reuse the \textit{same} vector of $B$ to update multiple rows of $C$.
+            
+            \vspace{0.2cm}
+            \begin{itemize}
+                \item \textbf{Loads:} 2 Scalars ($A_{i}, A_{i+1}$) + \textbf{1 Vector ($B$)}.
+                \item \textbf{Compute:} 2 FMA operations simultaneously:\\
+                $C_{i} \ += A_{i} \times B$\\
+                $C_{i+1} += A_{i+1} \times B$
+            \end{itemize}
+
+            \vspace{0.2cm}
+            \textbf{Why is it faster?}
+            \begin{itemize}
+                 \item[\textcolor{green!50!black}{\textbf{+}}] \textbf{Halved Memory Access:} We fetch $B$ once but use it for 2 rows of $C$. This drastically reduces L1 Cache traffic.
+                 \item[\textcolor{green!50!black}{\textbf{+}}] \textbf{Higher Arithmetic Intensity:} More math per byte loaded.
+            \end{itemize}
+        \end{column}
+        
+        \begin{column}{0.38\textwidth}
+            \begin{block}{Trade-offs}
+                \footnotesize
+                \begin{itemize}
+                    \item[\textcolor{orange}{\textbf{!}}] \textbf{High Register Pressure:} Requires many active registers. Excessive blocking (e.g., 4x4) can cause \textit{Register Spilling}, degrading performance.
+                    \item[\textcolor{orange}{\textbf{!}}] \textbf{Complexity:} Requires handling edge cases (odd matrix sizes) with specific cleanup loops.
+                \end{itemize}
+            \end{block}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\end{document}

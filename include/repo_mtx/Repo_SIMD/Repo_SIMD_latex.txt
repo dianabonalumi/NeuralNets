@@ -1,0 +1,135 @@
+\documentclass[aspectratio=169, 11pt]{beamer}
+
+% --- SETUP ESTETICO (CLEAN DESIGN) ---
+\usetheme{Madrid}
+\usecolortheme{seahorse} 
+\usefonttheme{structurebold} 
+
+% Rimuovi navigazione e footline per pulizia
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{}
+
+% Pacchetti
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{caption}
+
+% Metadati
+\title{Scalability Analysis: SIMD Implementation}
+\subtitle{Vectorization Impact \& Precision Costs}
+\author{Progetto AMSC}
+\date{\today}
+
+\begin{document}
+
+% --- SLIDE TITOLO ---
+\begin{frame}
+    \titlepage
+\end{frame}
+
+% --- SLIDE 1: CONFRONTO VISIVO ---
+\begin{frame}{Performance Overview: SIMD (Float)}
+    \begin{columns}[T]
+        % Grafico Tempo
+        \begin{column}{0.48\textwidth}
+            \centering
+            \includegraphics[width=\textwidth, height=0.55\textheight, keepaspectratio]{time_simd_float.png}
+            \captionof{figure}{\textbf{Execution Time (ms)}}
+            \small{\textit{Drastic reduction in time compared to Naive (47s $\to$ 1s).}}
+        \end{column}
+        
+        % Grafico GFLOPS
+        \begin{column}{0.48\textwidth}
+            \centering
+            \includegraphics[width=\textwidth, height=0.55\textheight, keepaspectratio]{gflops_simd_float.png}
+            \captionof{figure}{\textbf{Throughput (GFLOPS)}}
+            \small{\textit{Throughput drops as N increases (Memory Bandwidth bottleneck).}}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% --- SLIDE 2: CONFRONTO FLOAT VS DOUBLE ---
+\begin{frame}{Quantitative Analysis: Float vs Double}
+    \begin{columns}
+        % Tabella
+        \begin{column}{0.55\textwidth}
+            \centering
+            \textbf{Impact of Precision on SIMD Performance}
+            \vspace{0.2cm}
+            
+            \renewcommand{\arraystretch}{1.3}
+            \small
+            \begin{tabular}{l r r r}
+                \toprule
+                \textbf{Size ($N$)} & \textbf{Float} & \textbf{Double} & \textbf{$\Delta$ Overhead} \\
+                \midrule
+                $128^3$ & 0.14 ms & 0.37 ms & \textcolor{orange}{+158\%} \\
+                $512^3$ & 8.08 ms & 22.48 ms & \textcolor{orange}{+178\%} \\
+                $1024^3$ & 78.01 ms & 170.75 ms & \textcolor{orange}{+118\%} \\
+                $2048^3$ & \textbf{1.07 s} & \textbf{3.24 s} & \textcolor{red}{\textbf{+202\% ($\approx$ 3x)}} \\
+                \bottomrule
+            \end{tabular}
+        \end{column}
+
+        % Analisi Testuale
+        \begin{column}{0.42\textwidth}
+             \begin{block}{Insight: The Cost of Precision}
+                \small
+                Unlike the Naive method, precision matters significantly here.
+                
+                \vspace{0.2cm}
+                \textbf{Why is Double 3x slower?}
+                \begin{itemize}
+                    \item \textbf{Vector Capacity:} An AVX register holds 8 floats but only 4 doubles. Theoretical throughput is halved immediately.
+                    \item \textbf{Bandwidth Saturation:} Doubles require 2x memory bandwidth, saturating the bus faster.
+                \end{itemize}
+            \end{block}
+        \end{column}
+    \end{columns}
+    
+    \vspace{0.3cm}
+    \centering
+    \footnotesize \textbf{Improvement vs Naive:} SIMD Float at $N=2048$ is \textcolor{green!50!black}{\textbf{$\approx$ 44x Faster}} (1s vs 47s).
+\end{frame}
+
+% --- SLIDE 3: DIAGNOSI TECNICA ---
+\begin{frame}{Why is SIMD fast (but not optimal)?}
+    \begin{columns}
+        \begin{column}{0.6\textwidth}
+            SIMD (Single Instruction, Multiple Data) leverages CPU vector registers (SSE/AVX) to process multiple elements per cycle.
+            
+            \vspace{0.3cm}
+            \begin{itemize}
+                \setlength\itemsep{1em}
+                \item \textbf{Data Parallelism (The Win):} 
+                Instead of 1 multiplication per instruction, we perform 4 (Double) or 8 (Float) simultaneously.
+                
+                \item \textbf{The New Bottleneck (Memory):} 
+                As shown in the GFLOPS graph, performance drops for large $N$ ($30 \to 16$ GFLOPS). The CPU is now faster than the RAM. We are \textbf{Memory Bound}.
+                
+                \item \textbf{Next Step:} 
+                To reach OpenBLAS levels, we must reuse data in Cache (L1/L2) using \textbf{Tiling/Blocking}.
+            \end{itemize}
+        \end{column}
+        
+        \begin{column}{0.35\textwidth}
+            \centering
+            \setbeamercolor{block body}{bg=blue!10,fg=black}
+            \begin{block}{Vectorization Concept}
+                \centering
+                \scriptsize Single Operation (Scalar):\\
+                \texttt{A[0] * B[0]}\\
+                \vspace{0.2cm}
+                
+                \scriptsize SIMD Operation (Vector):\\
+                \texttt{[A0, A1, A2, A3] *}\\
+                \texttt{[B0, B1, B2, B3]}\\
+                \vspace{0.1cm}
+                \textbf{1 Cycle, 4 Results}
+            \end{block}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\end{document}

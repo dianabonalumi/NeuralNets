@@ -4,8 +4,11 @@ import subprocess
 import io
 import sys
 import os
+#Script Python per eseguire raccogliere i dati e generare grafici.
+# --- CONFIGURAZIONE ---
+executable = "./benchmark_test"  # Nome del tuo eseguibile compilato
 
-executable = "./benchmark_test" 
+# 1. CONTROLLO ARGOMENTI
 if len(sys.argv) < 3:
     print("ERRORE: Devi specificare solver e precisione.")
     print("Uso: python3 plot_results.py <solver> <precision>")
@@ -14,15 +17,17 @@ if len(sys.argv) < 3:
 
 solver_name = sys.argv[1]    # es. "simd"
 precision = sys.argv[2]      # es. "float"
-full_name = f"{solver_name}_{precision}" 
+full_name = f"{solver_name}_{precision}" # Per i nomi dei file
 
 print(f"--- [PYTHON] Avvio Benchmark: {solver_name.upper()} ({precision.upper()}) ---")
+
+# 2. ESECUZIONE C++
 try:
     result = subprocess.run(
         [executable, solver_name, precision], 
         capture_output=True, 
         text=True, 
-        check=True 
+        check=True
     )
 except subprocess.CalledProcessError as e:
     print("ERRORE DURANTE L'ESECUZIONE DEL C++:")
@@ -34,7 +39,12 @@ except FileNotFoundError:
 
 raw_output = result.stdout
 
+# 3. PARSING CSV
+# --- CORREZIONE QUI SOTTO: Inizializziamo la lista prima del ciclo ---
+csv_lines = [] 
+
 for line in raw_output.splitlines():
+    # Accetta l'header o righe che iniziano con un numero
     if "Size,Time" in line or (line and line[0].isdigit() and "," in line):
         csv_lines.append(line)
 
@@ -47,21 +57,24 @@ if not clean_csv_data:
 
 try:
     df = pd.read_csv(io.StringIO(clean_csv_data))
+    # Rimuove spazi bianchi dai nomi colonne
     df.columns = df.columns.str.strip()
 except Exception as e:
     print(f"ERRORE nella lettura del CSV: {e}")
     sys.exit(1)
 
+# 4. GENERAZIONE GRAFICI
 print(f"--- Generazione grafici per {full_name} ---")
 
 if not os.path.exists("plots"):
     os.makedirs("plots")
 
+# --- GRAFICO TEMPO ---
 plt.figure(figsize=(10, 6))
 
 if "Time_Mine" in df.columns:
     plt.plot(df["Size"], df["Time_Mine"], marker='o', linewidth=2, label=f"My Solver ({full_name})")
-elif "Time_ms" in df.columns: 
+elif "Time_ms" in df.columns:
     plt.plot(df["Size"], df["Time_ms"], marker='o', linewidth=2, label=f"My Solver ({full_name})")
 
 if "Time_Blas" in df.columns:
@@ -77,6 +90,7 @@ file_time = f"plots/time_{full_name}.png"
 plt.savefig(file_time)
 print(f"-> Grafico Tempo salvato in: {file_time}")
 
+# --- GRAFICO GFLOPS ---
 plt.figure(figsize=(10, 6))
 
 if "GFLOPs_Mine" in df.columns:
