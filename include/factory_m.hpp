@@ -7,13 +7,14 @@
 // Includi qui i vari solver separati
 #include "solvers/naive_solver.hpp"
 #include "solvers/loop_unroll_solver.hpp"
+#include "solvers/tiling_solver.hpp"
 
 // #include "solvers/BlockedSolver.hpp" ...
 enum class SolverType {
     NAIVE,
     SIMD,
     UNROLL,
-    BLOCKED,
+    TILING,
     OPENMP
 };
 
@@ -27,6 +28,9 @@ public:
 
             case SolverType::UNROLL:
                 return std::make_unique<Loop_Unroll_Solver<T>>();
+
+            case SolverType::TILING:
+                return std::make_unique<Tiling_Solver<T>>();
             
  
 

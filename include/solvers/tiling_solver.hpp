@@ -4,7 +4,7 @@
 #include "../matrix_solver.hpp" // Include interface
 
 template <typename T>
-class Naive_Solver : public Matrix_Solver<T> {
+class Tiling_Solver : public Matrix_Solver<T> {
 public:
     void multiply(int M, int N, int K, const T* A, const T* B, T* C) override {
         // Initialize C to zero
