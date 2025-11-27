@@ -9,12 +9,13 @@ private:
     int in, out;
     Matrix<T> weights;
 public:
-    Dense(int, int) {
-
-    }
-    Dense(int, int, const Matrix<T>) {
-
-    }
+    Dense(std::shared_ptr<Matrix_Solver<T>> solver, int in, int out)
+        :Layer<T>(solver), in(in), out(out) {}
+    
+    Dense(std::shared_ptr<Matrix_Solver<T>> solver, int in, int out, const Matrix<T> weights) 
+        :Dense<T>(solver, in, out) {
+            this->weights = weights;
+        }
 
     Matrix<T> Forward(const Matrix<T> X) {
         // Dense forward pass
