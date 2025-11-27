@@ -1,0 +1,7 @@
+• Exploit the SIMD instruction [3].
+• Exploit loop unrolling [4].
+• Make sure that your code is cache friendly [5,6,7].
+• Use OpenMP to parallelize the code.
+
+
+

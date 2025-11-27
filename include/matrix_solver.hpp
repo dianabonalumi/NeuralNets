@@ -10,7 +10,8 @@ public:
 
     // Metodo puro virtuale
     virtual void multiply(int M, int N, int K, const T* A, const T* B, T* C) = 0;
-    
+ 
+    virtual std::string getName() const = 0;
 };
 
 #endif
