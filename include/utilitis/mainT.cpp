@@ -35,6 +35,12 @@ int main(int argc, char* argv[]) {
     else if (arg_solver == "omp") {
         type = SolverType::OPENMP;
     }
+    else if (arg_solver == "unroll") {
+        type = SolverType::UNROLL;
+    }
+    else if (arg_solver == "tiling") {
+        type = SolverType::TILING;
+    }
     else if (arg_solver == "simd_unrolling") {
         type = SolverType::SIMD_UNROLL_1D;
     }
