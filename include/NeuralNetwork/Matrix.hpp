@@ -40,6 +40,9 @@ public:
     // ** FIX: Added default constructor **
     // This allows Matrix to be default-constructed (e.g., as a member of another class).
     Matrix() = default; 
+    // DA AGGIUNGERE in Matrix.hpp sotto "public:"
+    size_t getRows() const { return rows_; }
+    size_t getCols() const { return cols_; }
 
     // Destructor (Rule of Three/Five/Zero)
     ~Matrix() {
