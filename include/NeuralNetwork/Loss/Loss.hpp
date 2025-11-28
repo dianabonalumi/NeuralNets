@@ -15,8 +15,9 @@ protected:
 public:
     Loss(std::shared_ptr<Matrix_Solver<T>> solver): solver(solver) {}
 
-    virtual Matrix<T> Compute(const Matrix<T>) = 0;
+    virtual Matrix<T> Compute(const Matrix<T>, const Matrix<T>) = 0;
     virtual Matrix<T> Gradient() = 0;
+
 };
 
 #endif

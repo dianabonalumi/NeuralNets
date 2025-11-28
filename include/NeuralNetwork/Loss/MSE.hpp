@@ -9,11 +9,12 @@ template <typename T>
 class MSE : public Loss<T> {
 private:
     Matrix<T> lastX;
+    Matrix<T> lastY;
 
 public:
     MSE(std::shared_ptr<Matrix_Solver<T>> solver): Loss<T>(solver) {}
 
-    Matrix<T> Compute(const Matrix<T> X) {
+    Matrix<T> Compute(const Matrix<T> X, const Matrix<T> Y) {
         // Computation of MSE loss
         return X;
     }
