@@ -113,6 +113,9 @@ public:
             data_ = new T[size] {}; 
         }
     }
+  
+    size_t getRows() const { return rows_; }
+    size_t getCols() const { return cols_; }
 
     void Set(size_t r, size_t c, const T& val) {
         checkBounds(r, c);
