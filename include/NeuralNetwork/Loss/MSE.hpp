@@ -2,7 +2,6 @@
 #define MSE_HPP
 
 #include "Loss.hpp"
-
 #include <memory>
 
 template <typename T>
@@ -36,7 +35,7 @@ public:
             }
         }
 
-        Formula: 0.5 * Sum Squared Error
+        //Formula: 0.5 * Sum Squared Error
         T loss_val = 0.5 * sum_sq;
 
        
@@ -45,9 +44,22 @@ public:
 
         return result;
     }
-    Matrix<T> Gradient() {
-        // Computation of MSE gradient
-        return Matrix<T>(2,2);
+
+    // --- GRADIENT (Backward) ---
+    
+    Matrix<T> Gradient() override {
+        size_t rows = this->lastX.getRows();
+        size_t cols = this->lastX.getCols();
+        Matrix<T> grad(rows, cols);
+
+        for(size_t i=0; i<rows; ++i) {
+            for(size_t j=0; j<cols; ++j) {
+                // Derivata di 0.5*(x-y)^2 = (x-y)
+                T diff = this->lastX.Get(i, j) - this->lastY.Get(i, j);
+                grad.Set(i, j, diff);
+            }
+        }
+        return grad;
     }
 };
 
