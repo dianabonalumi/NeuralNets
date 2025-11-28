@@ -60,6 +60,39 @@ public:
         }
     }
 
+    // 1. Copy Constructor: Crea una NUOVA matrice copiando i dati dall'altra
+    Matrix(const Matrix& other) : rows_(other.rows_), cols_(other.cols_), owns_data_(true) {
+        if (other.rows_ * other.cols_ == 0) {
+            data_ = nullptr;
+        } else {
+            size_t size = rows_ * cols_;
+            data_ = new T[size]; 
+            // Copia profonda dei valori
+            std::copy(other.data_, other.data_ + size, data_);
+        }
+    }
+
+    // 2. Assignment Operator: Gestisce "matriceA = matriceB"
+    Matrix& operator=(const Matrix& other) {
+        if (this == &other) return *this; 
+
+        cleanup(); 
+
+        rows_ = other.rows_;
+        cols_ = other.cols_;
+        owns_data_ = true;
+
+        if (rows_ * cols_ > 0) {
+            size_t size = rows_ * cols_;
+            data_ = new T[size]; 
+            std::copy(other.data_, other.data_ + size, data_); 
+        } else {
+            data_ = nullptr;
+        }
+        return *this;
+    }
+
+
     // Sets the value at (r, c)
     void Set(size_t r, size_t c, const T& val) {
         checkBounds(r, c);
@@ -93,6 +126,25 @@ public:
         data_ = src;
         owns_data_ = false; // Important: we do not own this memory
     }
-};
 
-#endif // MATRIX_HPP
+    // Getters for matrix dimensions (essential for dimension checks in Layers)
+    size_t rows() const { return rows_; }
+    size_t cols() const { return cols_; }
+
+    // Creates and returns a new Matrix that is the transpose of this one.
+    // Necessary for backpropagation: (M x N) becomes (N x M).
+    Matrix<T> Transpose() const {
+        // Initialize result matrix with swapped dimensions (cols x rows)
+        Matrix<T> result(cols_, rows_); 
+
+        for (size_t r = 0; r < rows_; ++r) {
+            for (size_t c = 0; c < cols_; ++c) {
+                // Map element at (r, c) to (c, r) in the new matrix
+                result.Set(c, r, Get(r, c));
+            }
+        }
+        return result;
+    }
+
+};
+#endif 
