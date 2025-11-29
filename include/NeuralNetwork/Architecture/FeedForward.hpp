@@ -14,14 +14,13 @@ class FeedForward : public Architecture<T> {
 private:
     std::vector<std::shared_ptr<Layer<T>>> layers_;
     std::shared_ptr<Loss<T>> loss_;
-    T learning_rate_;
 
 public:
-    FeedForward(const std::vector<std::shared_ptr<Layer<T>>> layers, const std::shared_ptr<Loss<T>> loss, T learning_rate) 
+    FeedForward(const std::vector<std::shared_ptr<Layer<T>>> layers, const std::shared_ptr<Loss<T>> loss) 
         : layers_(layers), loss_(loss), learning_rate_(learning_rate) {
     }
 
-    Matrix<T> Train(const Matrix<T>& X, const Matrix<T>& Y) {
+    Matrix<T> Train(const Matrix<T>& X, const Matrix<T>& Y, T learning_rate) {
         Matrix<T> out, grad;
 
         // forward pass
