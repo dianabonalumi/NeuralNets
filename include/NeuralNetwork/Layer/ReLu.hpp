@@ -33,7 +33,7 @@ public:
     }
 
     // Backward Pass: Derivative is 1 if x > 0, else 0
-    Matrix<T> Backward(const Matrix<T> grad) override {
+    Matrix<T> Backward(const Matrix<T> grad, T learning_rate) override {
         size_t r = grad.rows();
         size_t c = grad.cols();
         Matrix<T> inputGrad(r, c);

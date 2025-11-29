@@ -17,7 +17,9 @@ public:
     virtual ~Layer() = default;
 
     virtual Matrix<T> Forward(const Matrix<T> X) = 0;
-    virtual Matrix<T> Backward(const Matrix<T> grad) = 0;
+    
+    // Updated Backward signature to support Gradient Descent
+    virtual Matrix<T> Backward(const Matrix<T> grad, T learning_rate) = 0;
 };
 
 #endif

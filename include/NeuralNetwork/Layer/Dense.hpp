@@ -59,7 +59,7 @@ public:
 
     // --- BACKWARD PASS ---
     // Computes dL/dX (to pass to previous layer) and dL/dW (for weight update)
-    Matrix<T> Backward(const Matrix<T> grad) override {
+    Matrix<T> Backward(const Matrix<T> grad, T learning_rate) override {
         size_t batchSize = grad.rows();
         
         // 1. Compute Gradient w.r.t Input (dL/dX) -> passes to previous layer
@@ -74,8 +74,15 @@ public:
         Matrix<T> weightGrad(in, out);
         this->solver_->multiply(in, out, batchSize, X_T.Flatten(), grad.Flatten(), weightGrad.Flatten());
 
-        // Note: In a full training loop, we would update weights here:
-        // weights -= learning_rate * weightGrad
+        // 3. Update Weights (Gradient Descent)
+        // Formula: W = W - learning_rate * dW
+        T* wData = weights.Flatten();
+        T* gData = weightGrad.Flatten();
+        size_t total_weights = in * out;
+
+        for(size_t i = 0; i < total_weights; ++i) {
+            wData[i] -= learning_rate * gData[i];
+        }
 
         return inputGrad;
     }
