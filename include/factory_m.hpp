@@ -12,6 +12,8 @@
 #include "solvers/tiling_solver.hpp"
 #include "solvers/simd_unroll_solver_2D.hpp"
 #include "solvers/simd_unroll_solver.hpp"
+#include "solvers/tiling_openmp_solver.hpp"
+#include "solvers/all_solver.hpp"
 
 
 enum class SolverType {
@@ -21,7 +23,9 @@ enum class SolverType {
     TILING,
     OPENMP,
     SIMD_UNROLL_1D,
-    SIMD_UNROLL_2D
+    SIMD_UNROLL_2D,
+    TILING_OPENMP,
+    ALL
 };
 
 template <typename T>
@@ -51,6 +55,12 @@ public:
 
             case SolverType::SIMD_UNROLL_2D:
                 return std::make_unique<Simd_Unroll_Solver_2D<T>>();
+
+            case SolverType::TILING_OPENMP:
+                return std::make_unique<Tiling_OpenMP_Solver<T>>();
+
+            case SolverType::ALL:
+                return std::make_unique<All_Solver<T>>();
  
             
             default:

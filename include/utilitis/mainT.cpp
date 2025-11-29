@@ -47,6 +47,12 @@ int main(int argc, char* argv[]) {
     else if (arg_solver == "simd_unroll_2d") {
         type = SolverType::SIMD_UNROLL_2D;
     }
+    else if (arg_solver == "tiling_omp") {
+        type = SolverType::TILING_OPENMP;
+    }
+    else if (arg_solver == "all") {
+        type = SolverType::ALL;
+    }
     else {
         std::cerr << "Solver non riconosciuto: " << arg_solver << "\n";
         return 1;
