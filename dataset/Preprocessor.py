@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 
 # to run, "python dataset/Preprocessor.py"
 
@@ -42,9 +41,18 @@ X_max = X_train.max(axis=0)
 X_train_scaled = (X_train - X_min) / (X_max - X_min)
 X_test_scaled = (X_test - X_min) / (X_max - X_min)
 
+# calculate min-max for targets
+y_min = y_train.min()
+y_max = y_train.max()
+y_range = y_max - y_min
+
+# Scale targets
+y_train_scaled = (y_train - y_min) / y_range
+y_test_scaled = (y_test - y_min) / y_range
+
 # save CSV
 X_train_scaled.to_csv("dataset/X_train_scaled.csv", index=False)
-y_train.to_csv("dataset/y_train.csv", index=False)
+y_train_scaled.to_csv("dataset/y_train_scaled.csv", index=False)
 
 X_test_scaled.to_csv("dataset/X_test_scaled.csv", index=False)
-y_test.to_csv("dataset/y_test.csv", index=False)
+y_test_scaled.to_csv("dataset/y_test_scaled.csv", index=False)
