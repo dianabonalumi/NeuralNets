@@ -3,6 +3,7 @@
 
 #include <stdexcept>
 #include <algorithm>
+#include <utility> 
 
 template <typename T>
 class Matrix {
@@ -10,23 +11,19 @@ private:
     size_t rows_ = 0;
     size_t cols_ = 0;
     T* data_ = nullptr;
-    bool owns_data_ = true;
+    // REMOVED: bool owns_data_ = true; (Ownership is always assumed)
 
     void cleanup() {
-        if (owns_data_ && data_ != nullptr) {
+        // We always assume ownership of data_, so we always delete[] if allocated.
+        if (data_ != nullptr) {
             delete[] data_;
         }
         data_ = nullptr;
         rows_ = 0;
         cols_ = 0;
-        // Setting owns_data_ back to true here is slightly misleading for a 
-        // completely cleaned state, but maintains the invariant that if data_
-        // is nullptr, it behaves as if it's owned (or empty).
-        owns_data_ = true; 
     }
 
     size_t getIndex(size_t r, size_t c) const {
-        // Row-major indexing
         return r * cols_ + c;
     }
 
@@ -37,14 +34,73 @@ private:
     }
 
 public:
-    // ** FIX: Added default constructor **
-    // This allows Matrix to be default-constructed (e.g., as a member of another class).
+    // Default Constructor
     Matrix() = default; 
 
-    // Destructor (Rule of Three/Five/Zero)
+    // Destructor (Rule of Five)
     ~Matrix() {
         cleanup();
     }
+    
+    // --- Rule of Five Implementation (Deep Copy/Move) ---
+
+    // 1. Copy Constructor (Deep Copy)
+    Matrix(const Matrix& other) 
+        : rows_(other.rows_), cols_(other.cols_), data_(nullptr) 
+    {
+        if (other.data_ != nullptr) {
+            size_t size = rows_ * cols_;
+            data_ = new T[size]; // Allocate NEW memory
+            std::copy(other.data_, other.data_ + size, data_); 
+        }
+    }
+
+    // 2. Copy Assignment Operator (Deep Copy)
+    Matrix& operator=(const Matrix& other) {
+        if (this != &other) {
+            cleanup(); // Clean up current memory
+            
+            rows_ = other.rows_;
+            cols_ = other.cols_;
+            
+            if (other.data_ != nullptr) {
+                size_t size = rows_ * cols_;
+                data_ = new T[size]; // Allocate NEW memory
+                std::copy(other.data_, other.data_ + size, data_);
+            }
+        }
+        return *this;
+    }
+
+    // 3. Move Constructor (Steal Ownership)
+    Matrix(Matrix&& other) noexcept
+        : rows_(other.rows_), cols_(other.cols_), data_(other.data_) 
+    {
+        // Steal resources and leave 'other' in an empty, safe state
+        other.rows_ = 0;
+        other.cols_ = 0;
+        other.data_ = nullptr;
+    }
+
+    // 4. Move Assignment Operator (Steal Ownership)
+    Matrix& operator=(Matrix&& other) noexcept {
+        if (this != &other) {
+            cleanup(); // Clean up current memory (optional but safe)
+
+            // Steal resources
+            rows_ = other.rows_;
+            cols_ = other.cols_;
+            data_ = other.data_;
+
+            // Leave 'other' in an empty, safe state
+            other.rows_ = 0;
+            other.cols_ = 0;
+            other.data_ = nullptr;
+        }
+        return *this;
+    }
+    
+    // --- Primary Constructor/Accessors ---
 
     // Constructor: Allocates and owns memory
     Matrix(size_t r, size_t c) : rows_(r), cols_(c) {
@@ -54,82 +110,48 @@ public:
             cols_ = 0;
         } else {
             size_t size = r * c;
-            // Value initialization {} ensures elements are zeroed (e.g., to 0 for int/double)
             data_ = new T[size] {}; 
-            owns_data_ = true;
         }
     }
+  
+    size_t rows() const { return rows_; }
+    size_t cols() const { return cols_; }
 
-    // 1. Copy Constructor: Crea una NUOVA matrice copiando i dati dall'altra
-    Matrix(const Matrix& other) : rows_(other.rows_), cols_(other.cols_), owns_data_(true) {
-        if (other.rows_ * other.cols_ == 0) {
-            data_ = nullptr;
-        } else {
-            size_t size = rows_ * cols_;
-            data_ = new T[size]; 
-            // Copia profonda dei valori
-            std::copy(other.data_, other.data_ + size, data_);
-        }
-    }
-
-    // 2. Assignment Operator: Gestisce "matriceA = matriceB"
-    Matrix& operator=(const Matrix& other) {
-        if (this == &other) return *this; 
-
-        cleanup(); 
-
-        rows_ = other.rows_;
-        cols_ = other.cols_;
-        owns_data_ = true;
-
-        if (rows_ * cols_ > 0) {
-            size_t size = rows_ * cols_;
-            data_ = new T[size]; 
-            std::copy(other.data_, other.data_ + size, data_); 
-        } else {
-            data_ = nullptr;
-        }
-        return *this;
-    }
-
-
-    // Sets the value at (r, c)
     void Set(size_t r, size_t c, const T& val) {
         checkBounds(r, c);
         data_[getIndex(r, c)] = val;
     }
 
-    // Gets the value at (r, c)
     T Get(size_t r, size_t c) const {
         checkBounds(r, c);
         return data_[getIndex(r, c)];
     }
 
-    // Returns a mutable pointer to the start of the flattened data
     T* Flatten() {
         return data_;
     }
 
-    // Returns a constant pointer to the start of the flattened data
     const T* Flatten() const {
         return data_;
     }
 
-    // Unflatten: Points to external memory (non-owning view)
-    void Unflatten(T* src, size_t r, size_t c) {
-        // 1. Clean up existing memory if owned by this matrix
-        cleanup();
+    // ** MODIFIED: Unflatten now performs a DEEP COPY and retains ownership **
+    void Unflatten(const T* src, size_t r, size_t c) {
+        // 1. Clean up existing memory
+        cleanup(); 
 
-        // 2. Point to the external memory without copying
+        if (src == nullptr || r == 0 || c == 0) {
+            return;
+        }
+
+        // 2. Allocate new internal memory (Deep Copy)
         rows_ = r;
         cols_ = c;
-        data_ = src;
-        owns_data_ = false; // Important: we do not own this memory
+        size_t size = r * c;
+        
+        data_ = new T[size]; // Allocate NEW memory
+        std::copy(src, src + size, data_); // Copy data from external source (src)
     }
-
-    // Getters for matrix dimensions (essential for dimension checks in Layers)
-    size_t rows() const { return rows_; }
-    size_t cols() const { return cols_; }
 
     // Creates and returns a new Matrix that is the transpose of this one.
     // Necessary for backpropagation: (M x N) becomes (N x M).
@@ -145,6 +167,6 @@ public:
         }
         return result;
     }
-
 };
-#endif 
+
+#endif // MATRIX_HPP
