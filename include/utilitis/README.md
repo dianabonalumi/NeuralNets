@@ -15,6 +15,8 @@ g++ -std=c++17 -O3 mainT.cpp
 -lpthread
 -fopenmp
 
+g++ -std=c++17 -O3 -march=native mainT.cpp -o benchmark_test -I./include -I/opt/OpenBLAS/include -L/opt/OpenBLAS/lib -lopenblas -lpthread -fopenmp
+
 3)
 ./benchmark_test tiposolver(tutto piccolo) tipo_dato(float/double)
 

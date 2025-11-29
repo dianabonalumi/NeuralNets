@@ -1,6 +1,7 @@
 #ifndef TILING_SOLVER_HPP
 #define TILING_SOLVER_HPP
 
+#include <omp.h>
 #include "../matrix_solver.hpp" // Include interface
 
 template <typename T>
@@ -10,6 +11,7 @@ public:
         // Initialize C to zero
         for (int i = 0; i < M * N; ++i) C[i] = 0;
 
+        #pragma omp parallel for collapse(2)
         for (int i = 0; i < M; ++i) {
             for (int k = 0; k < K; ++k) {
 
@@ -24,7 +26,7 @@ public:
         }
     }
 
-    std::string getName() const override { return "Tiling Solver"; }
+    std::string getName() const override { return "Tiling + OpenMP Solver"; }
 
 };
 
