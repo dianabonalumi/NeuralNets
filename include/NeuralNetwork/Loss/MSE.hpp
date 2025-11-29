@@ -21,8 +21,8 @@ public:
         this->lastX = prediction;
         this->lastY = target;
         
-        size_t rows = prediction.getRows();
-        size_t cols = prediction.getCols();
+        size_t rows = prediction.rows();
+        size_t cols = prediction.cols();
 
         T sum_sq = 0;
 
@@ -48,8 +48,8 @@ public:
     // --- GRADIENT (Backward) ---
     
     Matrix<T> Gradient() override {
-        size_t rows = this->lastX.getRows();
-        size_t cols = this->lastX.getCols();
+        size_t rows = this->lastX.rows();
+        size_t cols = this->lastX.cols();
         Matrix<T> grad(rows, cols);
 
         for(size_t i=0; i<rows; ++i) {
