@@ -17,10 +17,10 @@ private:
 
 public:
     FeedForward(const std::vector<std::shared_ptr<Layer<T>>> layers, const std::shared_ptr<Loss<T>> loss) 
-        : layers_(layers), loss_(loss) {
+        : layers_(layers), loss_(loss), learning_rate_(learning_rate) {
     }
 
-    Matrix<T> Train(const Matrix<T>& X, const Matrix<T>& Y) {
+    Matrix<T> Train(const Matrix<T>& X, const Matrix<T>& Y, T learning_rate) {
         Matrix<T> out, grad;
 
         // forward pass
@@ -29,7 +29,7 @@ public:
         // backward pass
         grad = this->loss_->Gradient();
         for(auto it = this->layers_.rbegin();it != this->layers_.rend();it++) {
-            grad = (*it)->Backward(grad);
+            grad = (*it)->Backward(grad, learning_rate_);
         }
 
         return out;
