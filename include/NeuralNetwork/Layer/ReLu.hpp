@@ -1,18 +1,22 @@
-#ifndef SIGMOID_HPP
-#define SIGMOID_HPP
+#ifndef RELU_HPP
+#define RELU_HPP
 
 #include "Layer.hpp"
-#include <cmath> 
+#include <algorithm> 
 
 template <typename T>
-class Sigmoid : public Layer<T> {
+class ReLU : public Layer<T> {
 private:
-    Matrix<T> lastOutput; // Cache for backward pass
+    Matrix<T> lastInput; // Cache for backward pass
 
 public:
-    Sigmoid(std::shared_ptr<Matrix_Solver<T>> solver): Layer<T>(solver) {}
+    // Constructor
+    ReLU(std::shared_ptr<Matrix_Solver<T>> solver) : Layer<T>(solver) {}
 
+    // Forward Pass: f(x) = max(0, x)
     Matrix<T> Forward(const Matrix<T> X) override {
+        lastInput = X;
+        
         size_t r = X.rows();
         size_t c = X.cols();
         Matrix<T> output(r, c);
@@ -22,30 +26,30 @@ public:
         size_t size = r * c;
 
         for(size_t i = 0; i < size; ++i) {
-            // f(x) = 1 / (1 + e^-x)
-            outData[i] = 1.0 / (1.0 + std::exp(-inData[i]));
+            // Logic: Set negative values to zero
+            outData[i] = std::max(static_cast<T>(0), inData[i]);
         }
-
-        lastOutput = output; 
         return output;
     }
 
+    // Backward Pass: Derivative is 1 if x > 0, else 0
     Matrix<T> Backward(const Matrix<T> grad) override {
         size_t r = grad.rows();
         size_t c = grad.cols();
         Matrix<T> inputGrad(r, c);
 
         const T* gradData = grad.Flatten();
-        const T* outData = lastOutput.Flatten();
+        const T* inData = lastInput.Flatten();
         T* resultData = inputGrad.Flatten();
         size_t size = r * c;
 
         for(size_t i = 0; i < size; ++i) {
-            T sig = outData[i];
-            // Derivative: f'(x) = f(x) * (1 - f(x))
-            resultData[i] = gradData[i] * (sig * (1.0 - sig));
+            if (inData[i] > 0) {
+                resultData[i] = gradData[i]; // Pass through
+            } else {
+                resultData[i] = 0;           // Block gradient
+            }
         }
-
         return inputGrad;
     }
 };

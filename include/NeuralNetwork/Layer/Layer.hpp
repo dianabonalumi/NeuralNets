@@ -13,6 +13,9 @@ protected:
 public:
     Layer(std::shared_ptr<Matrix_Solver<T>> solver): solver_(solver) {}
     
+    // Virtual destructor: ensures proper cleanup of derived classes
+    virtual ~Layer() = default;
+
     virtual Matrix<T> Forward(const Matrix<T> X) = 0;
     virtual Matrix<T> Backward(const Matrix<T> grad) = 0;
 };
