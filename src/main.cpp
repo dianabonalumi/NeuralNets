@@ -13,7 +13,7 @@
 #include "../include/factory_m.hpp"
 
 // To compile, from directory neuralnets-1-neuralnets/
-// g++ src/main.cpp -mavx -mfma -mavx2 -o main
+// g++ src/main.cpp -mavx -mfma -mavx2 -fopenmp -lpthread -o main
 
 // Notes:
 // For polymorphism pointers have to be used
