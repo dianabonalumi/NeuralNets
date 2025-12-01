@@ -31,17 +31,14 @@ void printMatrix(Matrix<double> m) {
 
 // M1: (a x b), M2: (b x c), res: (a x c), multiply: (a, c, b)
 
-int main() {
-    // solver
-    std::shared_ptr<Matrix_Solver<double>> solver = std::move(SolverFactory<double>::createSolver(SolverType::SIMD_UNROLL_2D));
-
+void run_arch(std::shared_ptr<Matrix_Solver<double>> solver) {
     // architecture shape
     int input_features = 8;
 
-    int hidden_shape1 = 64;
-    int hidden_shape2 = 32;
-    int hidden_shape3 = 16;
-    int hidden_shape4 = 8;
+    int hidden_shape1 = 128;
+    int hidden_shape2 = 64;
+    int hidden_shape3 = 32;
+    int hidden_shape4 = 16;
 
     int output_shape = 1;
 
@@ -109,5 +106,29 @@ int main() {
         loss_file << i+1 << "," << t_loss << "," << val_loss << "\n";
     }
     loss_file.close();
+}
+
+int main() {
+    // naive
+    std::shared_ptr<Matrix_Solver<double>> solver = std::move(SolverFactory<double>::createSolver(SolverType::NAIVE));
+
+    auto start = std::chrono::high_resolution_clock::now();
+    run_arch(solver);
+    auto end = std::chrono::high_resolution_clock::now();
+    auto naive = std::chrono::duration_cast<std::chrono::seconds>(end - start);
+
+    // all
+    solver = std::move(SolverFactory<double>::createSolver(SolverType::ALL));
+
+    start = std::chrono::high_resolution_clock::now();
+    run_arch(solver);
+    end = std::chrono::high_resolution_clock::now();
+    auto all = std::chrono::duration_cast<std::chrono::seconds>(end - start);
+
+    // results
+    std::cout << "Naive: " << naive.count() << std::endl;
+    std::cout << "All: " << all.count() << std::endl;
+
     return 0;
 }
+
