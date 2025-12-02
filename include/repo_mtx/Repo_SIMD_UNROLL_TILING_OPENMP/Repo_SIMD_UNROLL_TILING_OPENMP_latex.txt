@@ -1,0 +1,129 @@
+\documentclass[aspectratio=169, 11pt]{beamer}
+
+% --- SETUP ESTETICO ---
+\usetheme{Madrid}
+\usecolortheme{seahorse}
+\usefonttheme{structurebold}
+
+% Rimuovi elementi di disturbo
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{}
+
+% Pacchetti
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{caption}
+
+% Metadati
+\title{Scalability Analysis: The Ultimate Solver}
+\subtitle{Combining Tiling, OpenMP, and SIMD Vectorization}
+\author{Progetto AMSC}
+\date{\today}
+
+\begin{document}
+
+% --- TITOLO ---
+\begin{frame}
+    \titlepage
+\end{frame}
+
+% --- SLIDE 1: CONFRONTO VISIVO ---
+\begin{frame}{Performance Overview: Combined Optimization (Float)}
+    \begin{columns}[T]
+        % Grafico Tempo
+        \begin{column}{0.48\textwidth}
+            \centering
+            \includegraphics[width=\textwidth, height=0.55\textheight, keepaspectratio]{time_all_float.png}
+            \captionof{figure}{\textbf{Execution Time (ms)}}
+            \small{\textit{Linear scaling. Execution time for $N=2048$ is just 0.36s.}}
+        \end{column}
+
+        % Grafico GFLOPS
+        \begin{column}{0.48\textwidth}
+            \centering
+            \includegraphics[width=\textwidth, height=0.55\textheight, keepaspectratio]{gflops_all_float.png}
+            \captionof{figure}{\textbf{Throughput (GFLOPS)}}
+            \small{\textit{Peak throughput reaches $\approx 47-50$ GFLOPS.}}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% --- SLIDE 2: DATI ANALITICI ---
+\begin{frame}{Quantitative Analysis: The Final Result}
+    \begin{columns}[T] % Allineamento in alto per evitare sovrapposizioni
+
+        % COLONNA SINISTRA: TABELLA
+        \begin{column}{0.50\textwidth}
+            \centering
+            \textbf{Final Benchmark Results ($N=2048$)}
+            \vspace{0.2cm}
+
+            \renewcommand{\arraystretch}{1.3}
+            \small
+            \begin{tabular}{l r r r}
+                \toprule
+                \textbf{Metric} & \textbf{Float} & \textbf{Double} & \textbf{Ratio} \\
+                \midrule
+                Time & \textbf{360 ms} & \textbf{815 ms} & \textcolor{blue}{2.2x} \\
+                GFLOPS & 47.66 & 21.06 & \textcolor{gray}{BW Limit} \\
+                vs Blas & 7x Slower & 7.3x Slower & \textcolor{green!50!black}{Great!} \\
+                \bottomrule
+            \end{tabular}
+
+            \vspace{0.4cm}
+            \footnotesize
+            \raggedright % Allinea il testo a sinistra per pulizia
+            \textbf{Gain vs Tiling+OMP:}\\
+            Float: $0.46s \to 0.36s$ (\textbf{+22\% Faster})\\
+            \textit{Explicit SIMD squeezes the last drops of performance.}
+        \end{column}
+
+        % COLONNA DESTRA: WHY BEST
+        \begin{column}{0.48\textwidth}
+             \begin{block}{Why is this the best?}
+                This implementation attacks all three hardware bottlenecks simultaneously:
+                \vspace{0.2cm}
+                \begin{itemize}
+                    \item \textbf{Latency:} Tiling fits data in L1/L2 Cache.
+                    \item \textbf{Throughput:} SIMD instructions compute 8 floats per cycle.
+                    \item \textbf{Concurrency:} OpenMP utilizes all CPU cores.
+                \end{itemize}
+            \end{block}
+        \end{column}
+
+    \end{columns}
+\end{frame}
+
+% --- SLIDE 3: GRAND SUMMARY (IL VIAGGIO COMPLETO) ---
+\begin{frame}{Project Summary: From Naive to Optimized}
+    \centering
+    \textbf{Evolution of Matrix Multiplication ($N=2048$, Float)}
+    \vspace{0.3cm}
+
+    \renewcommand{\arraystretch}{1.2}
+    \footnotesize % Testo leggermente più piccolo per far stare tutto bene
+    \begin{table}
+        \rowcolors
+        \begin{tabular}{l l r r}
+            \toprule
+            \textbf{Method} & \textbf{Strategy} & \textbf{Time (s)} & \textbf{Speedup} \\
+            \midrule
+            \textcolor{red}{Naive} & None (Baseline) & 47.60 s & 1x \\
+            OpenMP & Multithreading & 14.39 s & 3.3x \\
+            Tiling & Cache Blocking & 1.32 s & 36x \\
+            SIMD Unroll 2D & Vectorization & 0.73 s & 65x \\
+            Tiling + OpenMP & Blocking + Threads & 0.46 s & 103x \\
+            \textbf{Final (All)} & \textbf{Tiling + Threads + SIMD} & \textbf{0.36 s} & \textcolor{green!50!black}{\textbf{132x}} \\
+            \midrule
+            \textit{OpenBLAS} & \textit{Assembly Tuned Library} & \textit{0.05 s} & \textit{950x} \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+
+    \vspace{0.1cm}
+    \scriptsize
+    \textbf{Conclusion:} By optimizing for Cache hierarchy, Vector registers, and Multi-core scaling, we reduced execution time by \textbf{two orders of magnitude}.
+\end{frame}
+
+\end{document}

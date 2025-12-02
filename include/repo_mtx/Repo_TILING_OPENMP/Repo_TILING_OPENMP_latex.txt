@@ -1,0 +1,102 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{caption}
+\geometry{margin=1in}
+
+\begin{document}
+
+\begin{center}
+\colorbox{blue!10}{
+    \begin{minipage}{0.9\textwidth}
+        \centering
+        \textbf{\LARGE Scalability Analysis: Tiling + OpenMP}\\[0.5em]
+        \large Parallelism Meets Cache Locality
+    \end{minipage}
+}
+
+\vspace{2em}
+\large Progetto AMSC
+
+\vspace{2em}
+December 2, 2025
+\end{center}
+
+\vspace{3em}
+
+\section*{Performance Overview: Tiling + OpenMP (Float)}
+
+\begin{minipage}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{fig_execution_time_float.png}
+\captionof{figure}{Execution Time (ms)}
+\textit{Best performance so far. Drops below 0.5s for $N=2048$.}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{fig_throughput_float.png}
+\captionof{figure}{Throughput (GFLOPS)}
+\textit{Reaches $\approx 40$ GFLOPS. Scaling is finally effective.}
+\end{minipage}
+
+\vspace{3em}
+
+\section*{Quantitative Analysis: Float vs Double}
+
+\begin{minipage}[t]{0.58\textwidth}
+\centering
+\begin{tabular}{>{\centering\arraybackslash}m{2cm} >{\centering\arraybackslash}m{2.5cm} >{\centering\arraybackslash}m{2.5cm} >{\centering\arraybackslash}m{2cm}}
+\hline
+\textbf{Size ($N$)} & \textbf{Float} & \textbf{Double} & \textbf{Gap} \\
+\hline
+$128^3$ & 20.29 ms & 4.32 ms & \textcolor{green}{-78\% (Faster?)} \\
+$1024^3$ & 66.36 ms & 141.11 ms & \textcolor{blue!50!black}{+112\%} \\
+$1664^3$ & 228.12 ms & 574.50 ms & \textcolor{blue!50!black}{+151\%} \\
+$2048^3$ & \textbf{0.46 s} & \textbf{1.10 s} & \textcolor{blue!50!black}{+139\%} \\
+\hline
+\end{tabular}
+
+\vspace{1em}
+\textbf{Speedup vs Single-Thread Tiling ($N=2048$):}\\
+Float: \textcolor{blue}{2.9x Faster} (1.32s $\rightarrow$ 0.46s)\\
+Double: \textcolor{blue}{2.8x Faster} (3.05s $\rightarrow$ 1.10s)
+\end{minipage}\hfill
+\begin{minipage}[t]{0.38\textwidth}
+\colorbox{blue!20}{
+    \begin{minipage}{\textwidth}
+        \textbf{Why OpenMP works now?}\\[0.5em]
+        In the Naive implementation, OpenMP failed because threads fought for memory bandwidth.\\[0.5em]
+        With \textbf{Tiling}, each thread works on a data block residing in its private L1/L2 Cache.\\[0.5em]
+        \textbf{Result}: Bandwidth contention is minimized, allowing cores to scale performance effectively.
+    \end{minipage}
+}
+
+\vspace{1em}
+\footnotesize \textit{*Note:} The data is now consistent. The weird jump at $N=128$ (Double being faster) is likely due to thread wake-up latency being masked differently or simpler caching.
+\end{minipage}
+\section*{The Evolution of Optimization}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{lcll}
+\hline
+\textbf{Method} & \textbf{Time} ($N = 2048$ \textbf{Float}) & \textbf{Bottleneck} \\
+\hline
+Naive & 47.60 s & Cache Thrashing \\
+OpenMP (Naive) & 14.39 s & Bandwidth Saturation \\
+Tiling (Serial) & 1.32 s & Instruction Overhead \\
+SIMD 2D Unroll & 0.73 s & Single Core Limit \\
+\textbf{Tiling + OpenMP} & \textbf{0.46 s} & \textbf{Synchronization / Last Level Cache} \\
+\hline
+\end{tabular}
+\end{table}
+
+\noindent\textbf{Final Verdict:} Combining Algorithms (Tiling) + Hardware features (Multi-core) yields the best results, approaching (but still 10x slower than) OpenBLAS (0.05s).
+
+\end{document}

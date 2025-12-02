@@ -1,0 +1,132 @@
+\documentclass[aspectratio=169, 11pt]{beamer}
+
+% --- SETUP ESTETICO ---
+\usetheme{Madrid}
+\usecolortheme{seahorse}
+\usefonttheme{structurebold}
+
+% Rimuovi elementi di disturbo
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{}
+
+% Pacchetti
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{tikz} % Per diagrammi semplici
+
+% Metadati
+\title{Scalability Analysis: Tiling (Blocking)}
+\subtitle{Optimizing Cache Reuse \& Memory Locality}
+\author{Progetto AMSC}
+\date{\today}
+
+\begin{document}
+
+% --- TITOLO ---
+\begin{frame}
+    \titlepage
+\end{frame}
+
+% --- SLIDE 1: CONFRONTO VISIVO ---
+\begin{frame}{Performance Overview: Tiling (Float)}
+    \begin{columns}[T]
+        % Grafico Tempo
+        \begin{column}{0.48\textwidth}
+            \centering
+            \includegraphics[width=\textwidth, height=0.55\textheight, keepaspectratio]{time_tiling_float.png}
+            \captionof{figure}{\textbf{Execution Time (ms)}}
+            \small{\textit{Consistent performance. No exponential explosion like Naive.}}
+        \end{column}
+
+        % Grafico GFLOPS
+        \begin{column}{0.48\textwidth}
+            \centering
+            \includegraphics[width=\textwidth, height=0.55\textheight, keepaspectratio]{gflops_tiling_float.png}
+            \captionof{figure}{\textbf{Throughput (GFLOPS)}}
+            \small{\textit{Sustains $\approx 15-20$ GFLOPS. Drops slightly at $N=2048$.}}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% --- SLIDE 2: CONFRONTO FLOAT VS DOUBLE ---
+\begin{frame}{Quantitative Analysis: Float vs Double}
+    \begin{columns}
+        % Tabella
+        \begin{column}{0.55\textwidth}
+            \centering
+            \textbf{Impact of Tiling on Execution Time}
+            \vspace{0.2cm}
+
+            \renewcommand{\arraystretch}{1.3}
+            \small
+            \begin{tabular}{l r r r}
+                \toprule
+                \textbf{Size ($N$)} & \textbf{Float} & \textbf{Double} & \textbf{$\Delta$ Overhead} \\
+                \midrule
+                $128^3$ & 0.28 ms & 0.31 ms & \textcolor{green!50!black}{+10\%} \\
+                $1024^3$ & 94.75 ms & 186.67 ms & \textcolor{orange}{+97\%} \\
+                $1536^3$ & 302.50 ms & 1.03 s & \textcolor{red}{+240\%} \\
+                $2048^3$ & \textbf{1.32 s} & \textbf{3.05 s} & \textcolor{red}{\textbf{+131\% ($\approx$ 2.3x)}} \\
+                \bottomrule
+            \end{tabular}
+        \end{column}
+
+        % Analisi Testuale
+        \begin{column}{0.42\textwidth}
+             \begin{block}{Insight: Cache Reuse Wins}
+                Tiling drastically reduces Memory Access penalties compared to Naive ($47s \to 1.3s$).
+
+                \vspace{0.2cm}
+                \textbf{Double Penalty:}
+                Since \texttt{double} takes 2x space, effective cache capacity is halved. The "Tile Size" (Block Size) effectively shrinks, leading to more cache misses compared to Float.
+            \end{block}
+        \end{column}
+    \end{columns}
+
+    \vspace{0.3cm}
+    \centering
+    \footnotesize \textbf{Comparison:} Slower than optimized SIMD-2D ($0.73s$) due to higher loop overhead (6 nested loops).
+\end{frame}
+
+% --- SLIDE 3: DIAGNOSI TECNICA ---
+\begin{frame}{Why Tiling works (The L1/L2 Sweet Spot)}
+    \begin{columns}
+        \begin{column}{0.6\textwidth}
+            Tiling (or Blocking) changes the order of operations to fit sub-matrices into the fast Cache memory.
+
+            \vspace{0.3cm}
+            \begin{itemize}
+                \setlength\itemsep{1em}
+                \item \textbf{Temporal Locality:}
+                Instead of loading a row of $A$ and scanning the \textit{entire} matrix $B$ (evicting data from cache), we load a small block of $A$ and $B$, reuse them completely for calculations, and then move on.
+
+                \item \textbf{Reduced Bandwidth Pressure:}
+                Data is fetched from RAM once and used many times inside the CPU Cache.
+
+                \item \textbf{The Trade-off:}
+                It introduces complex loop logic (6 nested loops). Without efficient SIMD inside the inner loops, the instruction overhead limits the maximum GFLOPS.
+            \end{itemize}
+        \end{column}
+
+        \begin{column}{0.35\textwidth}
+            \centering
+            \setbeamercolor{block body}{bg=green!10,fg=black}
+            \begin{block}{Visual Concept}
+                \centering
+                \begin{tikzpicture}[scale=0.6]
+                    \draw[fill=gray!20] (0,0) rectangle (4,4);
+                    \draw[step=1.0,black,thin] (0,0) grid (4,4);
+                    \draw[fill=red!40, thick] (1,2) rectangle (2,3);
+                    \node at (2, -0.5) {\footnotesize Processing Block-by-Block};
+                \end{tikzpicture}
+                \vspace{0.2cm}
+
+                \scriptsize Keeps active data in L1 Cache ($< 32$KB).
+            \end{block}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\end{document}
