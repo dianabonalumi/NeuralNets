@@ -42,9 +42,9 @@ private:
                 double rel_err = diff / (std::abs(expected[i]) + 1e-9);
                 if (rel_err < 0.01) continue; 
 
-                std::cerr << "ERRORE all'indice " << i 
-                          << ": Atteso " << expected[i] 
-                          << ", Ottenuto " << actual[i] << "\n";
+                std::cerr << "ERROR at index " << i
+                          << ": Expected " << expected[i]
+                          << ", Obtained " << actual[i] << "\n";
                 return false;
             }
         }
@@ -71,8 +71,8 @@ public:
 
         if (!verify(M * N, C_blas.data(), C_mine.data())) {
             std::cerr << "\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
-            std::cerr << "ERRORE CRITICO: Il solver " << solver->getName() << " produce risultati errati!\n";
-            std::cerr << "Interrompo l'esecuzione per evitare benchmark falsi.\n";
+            std::cerr << "CRITICAL ERROR: Solver " << solver->getName() << " gives wrong output!\n";
+            std::cerr << "Interruption execution to avoid wrong benchmarks.\n";
             std::cerr << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
             exit(1); 
         }

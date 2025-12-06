@@ -6,12 +6,12 @@
 
 
  // require flag -mfma for FMA instructions
-//generic declaration,  he specializations follow
+//generic declaration, specializations follow
 template <typename T>
 class Simd_Solver : public Matrix_Solver<T> {
 public:
     void multiply(int M, int N, int K, const T* A, const T* B, T* C) override {
-        // Fallback o errore se T non è float/double
+        // Fallback or error if T not float/double
     }
     std::string getName() const override { return "SIMD Solver"; }
 };
@@ -22,10 +22,10 @@ class Simd_Solver<float> : public Matrix_Solver<float> {
 public:
     void multiply(int M, int N, int K, const float* A, const float* B, float* C) override {
         
-        // innizialisazione di C at zero
+        // initialization of C at zero
         for (int i = 0; i < M * N; ++i) C[i] = 0.0f;
 
-        // whe cange the order of the loops for better performance (coalisced memory access)
+        // change order of the loops for better performance (coalesced memory access)
         for (int i = 0; i < M; ++i) {
             for (int k = 0; k < K; ++k) {
                 
