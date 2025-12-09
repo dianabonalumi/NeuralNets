@@ -12,10 +12,10 @@ The contents of the `include/NeuralNetwork/Loss/` directory are as follows:
 * **`MSE.hpp`**: Mean Squared Error implementation.
 * **`README.md`**: This documentation.
 
----
+
 
 ## 🛠 Class Details
-
+git 
 ### 1. Base Interface: `Loss.hpp`
 This is the parent class from which all error metrics inherit.
 * **Type:** Abstract Class (Template `<typename T>`).
