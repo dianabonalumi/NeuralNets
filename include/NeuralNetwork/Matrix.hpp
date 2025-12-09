@@ -114,8 +114,8 @@ public:
         }
     }
   
-    size_t getRows() const { return rows_; }
-    size_t getCols() const { return cols_; }
+    size_t rows() const { return rows_; }
+    size_t cols() const { return cols_; }
 
     void Set(size_t r, size_t c, const T& val) {
         checkBounds(r, c);
@@ -151,6 +151,21 @@ public:
         
         data_ = new T[size]; // Allocate NEW memory
         std::copy(src, src + size, data_); // Copy data from external source (src)
+    }
+
+    // Creates and returns a new Matrix that is the transpose of this one.
+    // Necessary for backpropagation: (M x N) becomes (N x M).
+    Matrix<T> Transpose() const {
+        // Initialize result matrix with swapped dimensions (cols x rows)
+        Matrix<T> result(cols_, rows_); 
+
+        for (size_t r = 0; r < rows_; ++r) {
+            for (size_t c = 0; c < cols_; ++c) {
+                // Map element at (r, c) to (c, r) in the new matrix
+                result.Set(c, r, Get(r, c));
+            }
+        }
+        return result;
     }
 };
 

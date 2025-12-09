@@ -20,7 +20,7 @@ public:
         : layers_(layers), loss_(loss) {
     }
 
-    Matrix<T> Train(const Matrix<T>& X, const Matrix<T>& Y) {
+    Matrix<T> Train(const Matrix<T>& X, const Matrix<T>& Y, T learning_rate) {
         Matrix<T> out, grad;
 
         // forward pass
@@ -29,7 +29,7 @@ public:
         // backward pass
         grad = this->loss_->Gradient();
         for(auto it = this->layers_.rbegin();it != this->layers_.rend();it++) {
-            grad = (*it)->Backward(grad);
+            grad = (*it)->Backward(grad, learning_rate);
         }
 
         return out;
