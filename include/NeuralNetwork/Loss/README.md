@@ -14,7 +14,7 @@ The contents of the `include/NeuralNetwork/Loss/` directory are as follows:
 
 
 
-## 🛠 Class Details
+## Class Details
 git 
 ### 1. Base Interface: `Loss.hpp`
 This is the parent class from which all error metrics inherit.
