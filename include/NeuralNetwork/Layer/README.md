@@ -41,30 +41,22 @@ The `Dense` layer (also known as Fully Connected) is responsible for the core we
 
 **A. Forward Pass:**
 It performs the standard linear transformation on the input batch $X$ using the layer's internal weights $W$:
-$$
-\text{Output} = X \times W
-$$
+$\text{Output} = X \times W$
 The input $X$ is cached internally as **`lastInput`** for gradient calculation.
 
 **B. Backward Pass (Training):**
 The `Dense` layer manages the full training cycle:
 
 1.  **Input Gradient Calculation (Propagating to Previous Layer):**
-    $$
-    \frac{\partial L}{\partial X} = \frac{\partial L}{\partial \text{Output}} \times W^T
-    $$
+    $\frac{\partial L}{\partial X} = \frac{\partial L}{\partial \text{Output}} \times W^T$\
     This is achieved by multiplying the incoming gradient by the transpose of the weight matrix.
 
 2.  **Weight Gradient Calculation (For Update):**
-    $$
-    \frac{\partial L}{\partial W} = X^T \times \frac{\partial L}{\partial \text{Output}}
-    $$
+    $\frac{\partial L}{\partial W} = X^T \times \frac{\partial L}{\partial \text{Output}}$\
     This step requires the cached input $X$ (as $X^T$).
 
 3.  **Weight Update (Gradient Descent):** The weights are updated using the calculated gradient and the provided learning rate:
-    $$
-    W_{\text{new}} = W_{\text{old}} - \text{learning\_rate} \times \frac{\partial L}{\partial W}
-    $$
+    $W_{\text{new}} = W_{\text{old}} - \text{learning rate} \times \frac{\partial L}{\partial W}$\
     This is implemented element-wise.
 
 ### Weight Initialization
@@ -82,25 +74,17 @@ Activation layers introduce the necessary non-linearity, allowing the network to
 The ReLU function is computationally efficient and has become the default activation for deep learning.
 
 * **Forward Pass:** The output is the maximum of the input and zero:
-    $$
-    f(x) = \max(0, x)
-    $$
+    $f(x) = \max(0, x)$
 * **Caching:** The original input matrix is stored as **`lastInput`**.
 * **Backward Pass:** The gradient is passed through unmodified for positive inputs and blocked (set to zero) for non-positive inputs.
-    $$
-    \frac{\partial L}{\partial X} = \frac{\partial L}{\partial \text{Output}} \odot \begin{cases} 1 & \text{if } x > 0 \\ 0 & \text{if } x \le 0 \end{cases}
-    $$
+    $\frac{\partial L}{\partial X} = \frac{\partial L}{\partial \text{Output}} \odot 1(x>0)$
 
 ### B. Sigmoid Activation (`Sigmoid.hpp`)
 
 The Sigmoid function maps all values to a range between 0 and 1, making it historically popular for binary classification output layers.
 
 * **Forward Pass:** Applies the logistic function:
-    $$
-    f(x) = \frac{1}{1 + e^{-x}}
-    $$
+    $f(x) = \frac{1}{1 + e^{-x}}$
 * **Caching:** The layer stores its own output as **`lastOutput`**.
 * **Backward Pass:** The derivative is elegantly calculated using the output itself, simplifying the process:
-    $$
-    \frac{\partial L}{\partial X} = \frac{\partial L}{\partial \text{Output}} \odot \left( \text{Output} \cdot (1 - \text{Output}) \right)
-    $$
+    $\frac{\partial L}{\partial X} = \frac{\partial L}{\partial \text{Output}} \odot \left( \text{Output} \cdot (1 - \text{Output}) \right)$
