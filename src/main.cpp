@@ -44,26 +44,19 @@ void run_arch(std::shared_ptr<Matrix_Solver<double>> solver) {
 
     // data load
     DataLoader<double> train(1);
-    train.loadCSV("/home/lorenzo/AMSC/neuralnets-1-neuralnets/dataset/X_train_scaled.csv",
-        "/home/lorenzo/AMSC/neuralnets-1-neuralnets/dataset/y_train_scaled.csv");
+    train.loadCSV("dataset/X_train_scaled.csv", "dataset/y_train_scaled.csv");
 
     DataLoader<double> test(1);
-    test.loadCSV("/home/lorenzo/AMSC/neuralnets-1-neuralnets/dataset/X_test_scaled.csv", 
-        "/home/lorenzo/AMSC/neuralnets-1-neuralnets/dataset/y_test_scaled.csv");
+    test.loadCSV("dataset/X_test_scaled.csv", "dataset/y_test_scaled.csv");
      
     // layers
     std::shared_ptr<Dense<double>> input = std::make_shared<Dense<double>>(solver, input_features, hidden_shape1);
     std::shared_ptr<ReLU<double>> inp_act = std::make_shared<ReLU<double>>(solver);
     std::shared_ptr<Dense<double>> hidden1 = std::make_shared<Dense<double>>(solver, hidden_shape1, hidden_shape2);
     std::shared_ptr<ReLU<double>> active1 = std::make_shared<ReLU<double>>(solver);
-    std::shared_ptr<Dense<double>> hidden2 = std::make_shared<Dense<double>>(solver, hidden_shape2, hidden_shape3);
-    std::shared_ptr<ReLU<double>> active2 = std::make_shared<ReLU<double>>(solver);
-    std::shared_ptr<Dense<double>> hidden3 = std::make_shared<Dense<double>>(solver, hidden_shape3, hidden_shape4);
-    std::shared_ptr<ReLU<double>> active3 = std::make_shared<ReLU<double>>(solver);
-    std::shared_ptr<Dense<double>> output = std::make_shared<Dense<double>>(solver, hidden_shape4, output_shape);
+    std::shared_ptr<Dense<double>> output = std::make_shared<Dense<double>>(solver, hidden_shape2, output_shape);
 
-    std::vector<std::shared_ptr<Layer<double>>> layers({input, inp_act, hidden1, active1, hidden2, active2,
-        hidden3, active3, output});
+    std::vector<std::shared_ptr<Layer<double>>> layers({input, inp_act, hidden1, active1, output});
 
     // loss
     std::shared_ptr<Loss<double>> mse = std::make_shared<MSE<double>>(solver);
@@ -109,24 +102,15 @@ void run_arch(std::shared_ptr<Matrix_Solver<double>> solver) {
 }
 
 int main() {
-    // naive
-    std::shared_ptr<Matrix_Solver<double>> solver = std::move(SolverFactory<double>::createSolver(SolverType::NAIVE));
+    // all
+    std::shared_ptr<Matrix_Solver<double>> solver = std::move(SolverFactory<double>::createSolver(SolverType::ALL));
 
     auto start = std::chrono::high_resolution_clock::now();
     run_arch(solver);
     auto end = std::chrono::high_resolution_clock::now();
-    auto naive = std::chrono::duration_cast<std::chrono::seconds>(end - start);
-
-    // all
-    solver = std::move(SolverFactory<double>::createSolver(SolverType::ALL));
-
-    start = std::chrono::high_resolution_clock::now();
-    run_arch(solver);
-    end = std::chrono::high_resolution_clock::now();
     auto all = std::chrono::duration_cast<std::chrono::seconds>(end - start);
 
     // results
-    std::cout << "Naive: " << naive.count() << std::endl;
     std::cout << "All: " << all.count() << std::endl;
 
     return 0;
