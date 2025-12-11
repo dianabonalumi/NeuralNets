@@ -12,11 +12,10 @@
 
 #include "../include/factory_m.hpp"
 
+#define EPOCHS 30
+
 // To compile, from directory neuralnets-1-neuralnets/
 // g++ src/main.cpp -mavx -mfma -mavx2 -fopenmp -lpthread -o main
-
-// Notes:
-// For polymorphism pointers have to be used
 
 void printMatrix(Matrix<double> m) {
     std::cout << "Matrix" << std::endl;
@@ -37,8 +36,6 @@ void run_arch(std::shared_ptr<Matrix_Solver<double>> solver) {
 
     int hidden_shape1 = 128;
     int hidden_shape2 = 64;
-    int hidden_shape3 = 32;
-    int hidden_shape4 = 16;
 
     int output_shape = 1;
 
@@ -68,7 +65,7 @@ void run_arch(std::shared_ptr<Matrix_Solver<double>> solver) {
     std::ofstream loss_file("loss_log.csv");
     loss_file << "epoch,train_loss,eval_loss\n";
 
-    for(int i = 0;i < 100;i++) {
+    for(int i = 0;i < EPOCHS;i++) {
         std::cout << "Starting epoch " << i + 1 << std::endl; 
         // training
         int n = train.totalSamples();
@@ -111,7 +108,7 @@ int main() {
     auto all = std::chrono::duration_cast<std::chrono::seconds>(end - start);
 
     // results
-    std::cout << "All: " << all.count() << std::endl;
+    std::cout << "Time: " << all.count() << " seconds" << std::endl;
 
     return 0;
 }
