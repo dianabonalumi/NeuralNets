@@ -89,6 +89,7 @@ NeuralNets
 
 ## Neural Network Training Results
 Training the Feed-Forward Neural Network resulted in a clear sign of convergence. The blue line represents training loss, while the orange line represents validation loss. As shown in the graph, the Training Loss **consistently decreased over epochs**, while the Validation Loss closely followed it, even if some spikes appear in the graph. This outcome confirms the correct implementation of the entire neural network architecture, from data loading to the custom matrix multiplication engine.
+
 ![Loss](.github/assets/loss.png)
 
 ## Results
