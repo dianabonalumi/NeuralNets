@@ -37,9 +37,21 @@ g++ src/main.cpp -mavx -mfma -mavx2 -fopenmp -lpthread -o main
 ./main
 ```
 
+## Mathematical formulation
+
+Training Feed-Forward Neural Networks typically involves [backpropagation](http://en.wikipedia.org/wiki/Backpropagation), which applies the [chain rule](https://en.wikipedia.org/wiki/Chain_rule) to compute gradients layer-by-layer, followed by [gradient descent](https://en.wikipedia.org/wiki/Gradient_descent) to update the network parameters.
+
+![Backpropagation](.github/assets/backpropagation.png)
+
+## Architecture
+
+The software architecture translates the mathematical formulation into a modular design. It separates the **neural network** components from the **matrix solver** responsible for matrix products. It also ensure extensibility through abstract base classes for all major components: Architecture, Layer, Loss, and Matrix_Solver.
+
+![Architecture](.github/assets/architecture.png)
+
 ## File structure
 
-The project directory structure is designed to separate the **neural network** from the **matrix solver** implementations.
+Mirroring the **architecture**, the file structure is also designed to separate the **neural network** from the **matrix solver** implementations.
 
 **Note: Each folder contains its own `README.md` with a detailed explanation of its contents.**
 
