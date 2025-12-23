@@ -37,7 +37,7 @@ public:
         size_t cols = prediction.cols();
         size_t total_elements = rows * cols;
 
-        // aggiunta per migliorare la cache-friendly :)
+        // per migliorare la cache-friendly :)
         const T* predData = prediction.Flatten();
         const T* targData = target.Flatten();
 
@@ -63,16 +63,44 @@ public:
         
         return result;
     }
-
-    // -------------------------------------------------------------------------
-    // GRADIENT
-    // 
+// -------------------------------------------------------------------------
+    // GRADIENT: Calcola la derivata rispetto all'input
+    // Formula: dL/dx = - (target / (prediction + epsilon)) / N
     // -------------------------------------------------------------------------
     Matrix<T> Gradient() override {
-        
-        return Matrix<T>(); 
-    }
+        if (this->lastX.rows() == 0) {
+             throw std::runtime_error("CrossEntropy Gradient chiamato prima di Compute.");
+        }
 
-}; 
+        size_t rows = this->lastX.rows();
+        size_t cols = this->lastX.cols();
+        size_t total_elements = rows * cols;
+        
+        // matrice gradiente
+        Matrix<T> grad(rows, cols);
+
+        // Accesso ai puntatori raw
+        const T* predData = this->lastX.Flatten();
+        const T* targData = this->lastY.Flatten();
+        T* gradData = grad.Flatten();
+
+        // Fattore di normalizzazione 
+        T inv_N = static_cast<T>(1) / static_cast<T>(rows);
+
+        for (size_t i = 0; i < total_elements; ++i) {
+            T p = predData[i];
+            T t = targData[i];
+
+        
+            T safe_p = p + epsilon;
+
+            // Derivata: - (target / prediction) * (1/N)
+            gradData[i] = -(t / safe_p) * inv_N;
+        }
+
+        return grad;
+    }
+};
 
 #endif
+
