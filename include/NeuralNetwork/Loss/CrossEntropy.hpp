@@ -5,6 +5,7 @@
 #include <cmath>        // Per std::log
 #include <stdexcept>    // Per eccezioni
 #include <limits>       // Per epsilon se necessario
+#include <memory>       // Per std::shared_ptr
 
 template <typename T>
 class CrossEntropy : public Loss<T> {
@@ -12,7 +13,7 @@ private:
     Matrix<T> lastX; // Salva le prediction per il calcolo del gradiente
     Matrix<T> lastY; // Salva i target per il calcolo del gradiente
     
-    // definisco una costante epsilon per evitare di avere log0
+    // definisco una costante epsilon per evitare di avere log(0)
     const T epsilon = static_cast<T>(1e-9);
 
 public:
@@ -24,11 +25,10 @@ public:
     // Formula: L = - (1/N) * sum( target * log(prediction + epsilon) )
     // -------------------------------------------------------------------------
     Matrix<T> Compute(const Matrix<T> prediction, const Matrix<T> target) override {
-        //check delle dimensioni
+        // check delle dimensioni
         if (prediction.rows() != target.rows() || prediction.cols() != target.cols()) {
             throw std::invalid_argument("CrossEntropy Error: Dimensioni di Prediction e Target non corrispondono.");
         }
-
     
         this->lastX = prediction;
         this->lastY = target;
@@ -37,7 +37,7 @@ public:
         size_t cols = prediction.cols();
         size_t total_elements = rows * cols;
 
-        //aggiunta per migliorare la cache-friendly :)
+        // aggiunta per migliorare la cache-friendly :)
         const T* predData = prediction.Flatten();
         const T* targData = target.Flatten();
 
@@ -47,7 +47,6 @@ public:
         for (size_t i = 0; i < total_elements; ++i) {
             T p = predData[i];
             T t = targData[i];
-
             
             T safe_p = p + epsilon; 
             
@@ -56,14 +55,24 @@ public:
         }
 
         // 4. Calcolo della media sulla Batch (divisione per numero di righe)
-        // Nota: Di solito si normalizza per il numero di campioni (rows), non per tutti gli elementi.
         T mean_loss = total_loss / static_cast<T>(rows);
 
-        // il risultato è uno scalare
+        // il risultato è uno scalare dentro una matrice 1x1
         Matrix<T> result(1, 1);
         result.Set(0, 0, mean_loss);
         
         return result;
     }
 
-}
+    // -------------------------------------------------------------------------
+    // GRADIENT
+    // 
+    // -------------------------------------------------------------------------
+    Matrix<T> Gradient() override {
+        
+        return Matrix<T>(); 
+    }
+
+}; 
+
+#endif
