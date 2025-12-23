@@ -20,10 +20,10 @@ public:
     // Costruttore
     CrossEntropy(std::shared_ptr<Matrix_Solver<T>> solver) : Loss<T>(solver) {}
 
-    // -------------------------------------------------------------------------
+    
     // COMPUTE: Calcola la Loss
-    // Formula: L = - (1/N) * sum( target * log(prediction + epsilon) )
-    // -------------------------------------------------------------------------
+    // Formula che implemento: L = - (1/N) * sum( target * log(prediction + epsilon) )
+   
     Matrix<T> Compute(const Matrix<T> prediction, const Matrix<T> target) override {
         // check delle dimensioni
         if (prediction.rows() != target.rows() || prediction.cols() != target.cols()) {
@@ -54,10 +54,10 @@ public:
             total_loss += -t * std::log(safe_p);
         }
 
-        // 4. Calcolo della media sulla Batch (divisione per numero di righe)
+        // Calcolo della media sulla Batch
         T mean_loss = total_loss / static_cast<T>(rows);
 
-        // il risultato è uno scalare dentro una matrice 1x1
+        // il risultato è uno scalare
         Matrix<T> result(1, 1);
         result.Set(0, 0, mean_loss);
         
@@ -66,7 +66,7 @@ public:
 // -------------------------------------------------------------------------
     // GRADIENT: Calcola la derivata rispetto all'input
     // Formula: dL/dx = - (target / (prediction + epsilon)) / N
-    // -------------------------------------------------------------------------
+   
     Matrix<T> Gradient() override {
         if (this->lastX.rows() == 0) {
              throw std::runtime_error("CrossEntropy Gradient chiamato prima di Compute.");
