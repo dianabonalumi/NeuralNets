@@ -10,12 +10,12 @@
 template <typename T>
 class Optimizer {
 protected:
-    std::shared_ptr<Matrix_Solver<T>> solver;
+    const std::shared_ptr<Matrix_Solver<T>>& solver;
 
 public:
-    Optimizer(std::shared_ptr<Matrix_Solver<T>> solver): solver(solver) {}
+    Optimizer(const std::shared_ptr<Matrix_Solver<T>>& solver): solver(solver) {}
 
-    virtual void Optimize(Matrix<T>&) = 0;
+    virtual void Optimize(Matrix<T>&, const Matrix<T>&) = 0;
 };
 
 #endif
