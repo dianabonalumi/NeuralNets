@@ -12,13 +12,13 @@ template <typename T>
 class Layer {
 protected:
     std::shared_ptr<Matrix_Solver<T>> solver_; 
-    const Optimizer optimizer_;
+    const Optimizer<T> optimizer_;
 public:
     // DEPRECATED
     Layer(std::shared_ptr<Matrix_Solver<T>> solver): solver_(solver), optimizer_(nullptr) {}
 
     // New constructor for general Optimizer
-    Layer(std::shared_ptr<Matrix_Solver<T>> solver, const Optimizer& optimizer):
+    Layer(std::shared_ptr<Matrix_Solver<T>> solver, const Optimizer<T>& optimizer):
         solver_(solver), optimizer_(optimizer) {}
     
     // Virtual destructor: ensures proper cleanup of derived classes
