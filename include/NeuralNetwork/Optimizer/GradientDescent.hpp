@@ -3,29 +3,25 @@
 
 #include "Optimizer.hpp"
 
-#include <memory>
-
 template <typename T>
-class GradientDescent {
+class GradientDescent : public Optimizer<T> {
 private:
-    T learning_rate_;
-    Matrix<T> gradient_;
+    const T& learning_rate_;
 
 public:
-    GradientDescent(std::shared_ptr<Matrix_Solver<T>> solver, T learning_rate):
-        Optimizer<T>(solver), learning_rate_(learning_rate) {
-    }
+    GradientDescent(std::shared_ptr<Matrix_Solver<T>> solver, const T& learning_rate):
+        Optimizer<T>(solver), learning_rate_(learning_rate) {}
 
-    void SetLearningRate(T lr) {
-        this->learning_rate_ = lr;
-    }
+    void Optimize(Matrix<T>& weights, const Matrix<T>& gradient) override {
+        T* wData = weights.Flatten();
+        T* gData = gradient.Flatten();
 
-    void SetGradient(Matrix<T>& gradient) {
-        this->gradient_ = gradient;
-    }
+        size_t total_weights = weights.rows() * weights.cols();
 
-    void Optimize(Matrix<T>& weights) {
-        // TODO: implementation
+        // could be optimized using the solver
+        for(size_t i = 0; i < total_weights; ++i) {
+            wData[i] -= this->learning_rate_ * gData[i];
+        }
     }
 };
 
