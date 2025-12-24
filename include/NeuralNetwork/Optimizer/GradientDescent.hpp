@@ -9,12 +9,12 @@ private:
     const T& learning_rate_;
 
 public:
-    GradientDescent(std::shared_ptr<Matrix_Solver<T>> solver, const T& learning_rate):
+    GradientDescent(const std::shared_ptr<Matrix_Solver<T>> solver, const T& learning_rate):
         Optimizer<T>(solver), learning_rate_(learning_rate) {}
 
     void Optimize(Matrix<T>& weights, const Matrix<T>& gradient) override {
         T* wData = weights.Flatten();
-        T* gData = gradient.Flatten();
+        const T* gData = gradient.Flatten();
 
         size_t total_weights = weights.rows() * weights.cols();
 
