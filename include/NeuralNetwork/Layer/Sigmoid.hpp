@@ -12,7 +12,7 @@ private:
 public:
     Sigmoid(const std::shared_ptr<Matrix_Solver<T>>& solver): Layer<T>(solver) {}
 
-    Matrix<T> Forward(const Matrix<T> X) override {
+    Matrix<T> Forward(const Matrix<T>& X) override {
         size_t r = X.rows();
         size_t c = X.cols();
         Matrix<T> output(r, c);

@@ -28,7 +28,7 @@ public:
     // Virtual destructor: ensures proper cleanup of derived classes
     virtual ~Layer() = default;
 
-    virtual Matrix<T> Forward(const Matrix<T> X) = 0;
+    virtual Matrix<T> Forward(const Matrix<T>& X) = 0;
     
     // DEPRECATED
     // Updated Backward signature to support Gradient Descent

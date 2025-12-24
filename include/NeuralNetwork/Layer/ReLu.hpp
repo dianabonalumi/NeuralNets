@@ -14,7 +14,7 @@ public:
     ReLU(const std::shared_ptr<Matrix_Solver<T>>& solver) : Layer<T>(solver) {}
 
     // Forward Pass: f(x) = max(0, x)
-    Matrix<T> Forward(const Matrix<T> X) override {
+    Matrix<T> Forward(const Matrix<T>& X) override {
         lastInput = X;
         
         size_t r = X.rows();

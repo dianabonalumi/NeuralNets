@@ -39,7 +39,7 @@ public:
 
     // --- FORWARD PASS ---
     // Computes Y = X * W
-    Matrix<T> Forward(const Matrix<T> X) override {
+    Matrix<T> Forward(const Matrix<T>& X) override {
         // Dimension check: Input features must match layer input size
         if (X.cols() != (size_t)in) {
             std::cerr << "Dense Error: Input dim " << X.cols() << " != Layer in " << in << std::endl;
