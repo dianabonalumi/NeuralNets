@@ -4,9 +4,13 @@
 #include "../Matrix.hpp"
 #include "../Optimizer/Optimizer.hpp"
 #include "../../matrix_solver.hpp"
-#include "WeightInitialization.hpp"
 
 #include <memory>
+
+typedef enum {
+    He,
+    Xavier
+} WeightInit;
 
 template <typename T>
 class Layer {
