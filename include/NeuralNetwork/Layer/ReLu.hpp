@@ -11,7 +11,7 @@ private:
 
 public:
     // Constructor
-    ReLU(std::shared_ptr<Matrix_Solver<T>> solver) : Layer<T>(solver) {}
+    ReLU(const std::shared_ptr<Matrix_Solver<T>>& solver) : Layer<T>(solver) {}
 
     // Forward Pass: f(x) = max(0, x)
     Matrix<T> Forward(const Matrix<T> X) override {

@@ -27,13 +27,13 @@ private:
 
 public:
     // Constructor: Random initialization
-    Dense(std::shared_ptr<Matrix_Solver<T>> solver, int in_features, int out_features)
+    Dense(const std::shared_ptr<Matrix_Solver<T>>& solver, int in_features, int out_features)
         : Layer<T>(solver), in(in_features), out(out_features), weights(in_features, out_features) {
             initWeights();
     }
     
     // Constructor: Manual weights (useful for debugging/loading weights)
-    Dense(std::shared_ptr<Matrix_Solver<T>> solver, int in_features, int out_features, const Matrix<T> w) 
+    Dense(const std::shared_ptr<Matrix_Solver<T>>& solver, int in_features, int out_features, const Matrix<T> w) 
         : Layer<T>(solver), in(in_features), out(out_features), weights(w) {
     }
 

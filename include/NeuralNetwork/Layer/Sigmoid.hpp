@@ -10,7 +10,7 @@ private:
     Matrix<T> lastOutput; // Cache for backward pass
 
 public:
-    Sigmoid(std::shared_ptr<Matrix_Solver<T>> solver): Layer<T>(solver) {}
+    Sigmoid(const std::shared_ptr<Matrix_Solver<T>>& solver): Layer<T>(solver) {}
 
     Matrix<T> Forward(const Matrix<T> X) override {
         size_t r = X.rows();
