@@ -1,21 +1,20 @@
 #ifndef OPTIMIZER_HPP
 #define OPTIMIZER_HPP
 
-#include "../Matrix.hpp"
-
-#include "../../matrix_solver.hpp"
-
 #include <memory>
+#include "../../Matrix.hpp"
+#include "../../matrix_solver.hpp"
 
 template <typename T>
 class Optimizer {
 protected:
-    const std::shared_ptr<Matrix_Solver<T>>& solver;
-
+    std::shared_ptr<Matrix_Solver<T>> solver;
 public:
-    Optimizer(const std::shared_ptr<Matrix_Solver<T>>& solver): solver(solver) {}
-
-    virtual void Optimize(Matrix<T>&, const Matrix<T>&) = 0;
+    Optimizer(std::shared_ptr<Matrix_Solver<T>> s) : solver(s) {}
+    virtual ~Optimizer() = default;
+    
+    // Standard name used across implementations and layers
+    virtual void Optimize(Matrix<T>& weights, const Matrix<T>& grad) = 0;
 };
 
 #endif
