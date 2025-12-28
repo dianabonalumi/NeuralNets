@@ -71,7 +71,7 @@ private:
         c_state = Matrix<T>(0, 0);
     }
 
-    // Reset dello stato che viene chiamato all'inizio di una nuova epoca
+    // Ogni volta che devo iniziare una nuova epoca faccio il reset dello stato
     void resetState() {
         // Mettiamo le dimensioni a 0 per forzare la ri-inizializzazione nel Forward
         h_state = Matrix<T>(0, 0);
@@ -82,5 +82,32 @@ private:
     T sigmoid(T x) { return 1.0 / (1.0 + std::exp(-x)); }
     T tanh_act(T x) { return std::tanh(x); }
 
+    //FORWARD PASS
+    Matrix<T> Forward(const Matrix<T>& X) override {
+        size_t batch_size = X.rows();
 
-}
+        //Inizializzazione stati se è il primo step o se è cambiato il batch size
+        if (h_state.rows() != batch_size || h_state.cols() != hidden_size) {
+            h_state = Matrix<T>(batch_size, hidden_size); 
+            c_state = Matrix<T>(batch_size, hidden_size);
+        }
+
+        // Salviamo gli stati precedenti per il backward
+        prev_h_state = h_state; 
+        prev_c_state = c_state;
+
+        // Matrice risultato per il nuovo hidden state
+        Matrix<T> next_h(batch_size, hidden_size);
+        Matrix<T> next_c(batch_size, hidden_size);
+
+        // matrici cache per il backward
+        cache_f = Matrix<T>(batch_size, hidden_size);
+        cache_i = Matrix<T>(batch_size, hidden_size);
+        cache_c_bar = Matrix<T>(batch_size, hidden_size);
+        cache_o = Matrix<T>(batch_size, hidden_size);
+        cache_tanh_c = Matrix<T>(batch_size, hidden_size);
+    }
+
+
+       
+        
