@@ -295,9 +295,9 @@ private:
             }
 
             // Update pesi usando l'Optimizer
-            this->optimizer_->update(W, dW);
-            this->optimizer_->update(U, dU);
-            this->optimizer_->update(b, db);
+            this->optimizer_->Optimize(W, dW);
+            this->optimizer_->Optimize(U, dU);
+            this->optimizer_->Optimize(b, db);
         };
 
         // Applica a tutte le porte
