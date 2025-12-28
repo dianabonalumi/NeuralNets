@@ -106,8 +106,38 @@ private:
         cache_c_bar = Matrix<T>(batch_size, hidden_size);
         cache_o = Matrix<T>(batch_size, hidden_size);
         cache_tanh_c = Matrix<T>(batch_size, hidden_size);
-    }
 
+        //Calcolo di X*W e h*U per tutte e 4 le porte.
+
+        // Matrici temporanee per i risultati intermedi
+        Matrix<T> XW_f(batch_size, hidden_size), hU_f(batch_size, hidden_size);
+        Matrix<T> XW_i(batch_size, hidden_size), hU_i(batch_size, hidden_size);
+        Matrix<T> XW_c(batch_size, hidden_size), hU_c(batch_size, hidden_size);
+        Matrix<T> XW_o(batch_size, hidden_size), hU_o(batch_size, hidden_size);
+
+        // Flattening per passare i puntatori al solver
+        const T* x_ptr = X.Flatten();
+        const T* h_ptr = prev_h_state.Flatten();
+
+        // Forget Gate
+        this->solver_->multiply(batch_size, hidden_size, input_features, x_ptr, W_f.Flatten(), XW_f.Flatten());
+        this->solver_->multiply(batch_size, hidden_size, hidden_size, h_ptr, U_f.Flatten(), hU_f.Flatten());
+
+        // Input Gate
+        this->solver_->multiply(batch_size, hidden_size, input_features, x_ptr, W_i.Flatten(), XW_i.Flatten());
+        this->solver_->multiply(batch_size, hidden_size, hidden_size, h_ptr, U_i.Flatten(), hU_i.Flatten());
+
+        //  Candidate (Cell) Gate
+        this->solver_->multiply(batch_size, hidden_size, input_features, x_ptr, W_c.Flatten(), XW_c.Flatten());
+        this->solver_->multiply(batch_size, hidden_size, hidden_size, h_ptr, U_c.Flatten(), hU_c.Flatten());
+
+        // Output Gate
+        this->solver_->multiply(batch_size, hidden_size, input_features, x_ptr, W_o.Flatten(), XW_o.Flatten());
+        this->solver_->multiply(batch_size, hidden_size, hidden_size, h_ptr, U_o.Flatten(), hU_o.Flatten());
+
+
+    }
+}
 
        
         
