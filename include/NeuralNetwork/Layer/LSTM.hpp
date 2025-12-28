@@ -135,7 +135,77 @@ private:
         this->solver_->multiply(batch_size, hidden_size, input_features, x_ptr, W_o.Flatten(), XW_o.Flatten());
         this->solver_->multiply(batch_size, hidden_size, hidden_size, h_ptr, U_o.Flatten(), hU_o.Flatten());
 
+        //Calcolo delle somme e attivazioni
+        
+        // Accediamo ai dati grezzi per velocità
+        const T* raw_XW_f = XW_f.Flatten(); const T* raw_hU_f = hU_f.Flatten();
+        const T* raw_XW_i = XW_i.Flatten(); const T* raw_hU_i = hU_i.Flatten();
+        const T* raw_XW_c = XW_c.Flatten(); const T* raw_hU_c = hU_c.Flatten();
+        const T* raw_XW_o = XW_o.Flatten(); const T* raw_hU_o = hU_o.Flatten();
 
+        // Dati dei bias (attenzione: bias è 1xHidden, va broadcastato su tutte le righe)
+        const T* b_f_ptr = b_f.Flatten();
+        const T* b_i_ptr = b_i.Flatten();
+        const T* b_c_ptr = b_c.Flatten();
+        const T* b_o_ptr = b_o.Flatten();
+
+        size_t total_elements = batch_size * hidden_size;
+
+        // Usiamo un ciclo lineare unico (più cache friendly del doppio for)
+        
+        
+        // Punter alle matrici output/cache
+        T* next_h_ptr = next_h.Flatten();
+        T* next_c_ptr = next_c.Flatten();
+        const T* prev_c_ptr = prev_c_state.Flatten();
+        
+        // Puntatori cache
+        T* c_f_ptr = cache_f.Flatten();
+        T* c_i_ptr = cache_i.Flatten();
+        T* c_cb_ptr = cache_c_bar.Flatten();
+        T* c_o_ptr = cache_o.Flatten();
+        T* c_tc_ptr = cache_tanh_c.Flatten();
+
+        for (size_t idx = 0; idx < total_elements; ++idx) {
+            size_t c = idx % hidden_size; // Colonna corrente (per il bias)
+
+            // Calcolo Somme (XW + hU + b)
+            T val_f = raw_XW_f[idx] + raw_hU_f[idx] + b_f_ptr[c];
+            T val_i = raw_XW_i[idx] + raw_hU_i[idx] + b_i_ptr[c];
+            T val_c = raw_XW_c[idx] + raw_hU_c[idx] + b_c_ptr[c];
+            T val_o = raw_XW_o[idx] + raw_hU_o[idx] + b_o_ptr[c];
+
+            // Attivazioni
+            T f = sigmoid(val_f);       // Forget Gate
+            T i = sigmoid(val_i);       // Input Gate
+            T c_bar = tanh_act(val_c);  // Candidate
+            T o = sigmoid(val_o);       // Output Gate
+
+            // Salvataggio Cache
+            c_f_ptr[idx] = f;
+            c_i_ptr[idx] = i;
+            c_cb_ptr[idx] = c_bar;
+            c_o_ptr[idx] = o;
+
+            // Aggiornamento Stati
+            // C_t = f * C_{t-1} + i * c_bar
+            T old_C = prev_c_ptr[idx];
+            T new_C = (f * old_C) + (i * c_bar);
+            next_c_ptr[idx] = new_C;
+
+            // h_t = o * tanh(C_t)
+            T tanh_new_C = tanh_act(new_C);
+            T new_h = o * tanh_new_C;
+            next_h_ptr[idx] = new_h;
+            
+            c_tc_ptr[idx] = tanh_new_C;
+        }
+
+        // Aggiorna stati interni
+        h_state = next_h;
+        c_state = next_c;
+
+        return h_state;
     }
 }
 
