@@ -7,7 +7,7 @@
 #include <cstring> //se necessario per memset
 
 template <typename T> 
-class LSTM : public Layer<T> > {
+class LSTM : public Layer<T>  {
 private: 
     int input_features;
     int hidden_size;
