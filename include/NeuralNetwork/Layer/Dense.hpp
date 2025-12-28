@@ -11,83 +11,72 @@ private:
     int in;
     int out;
     Matrix<T> weights;
-    Matrix<T> lastInput; // Cache for Backward pass
-
-    // Initialize weights with small random values to break symmetry
-    void initWeights() {
-         std::default_random_engine generator;
-         std::uniform_real_distribution<T> distribution(-0.1, 0.1);
-         
-         T* wData = weights.Flatten();
-         size_t total_weights = in * out;
-         for(size_t i = 0; i < total_weights; ++i) {
-             wData[i] = distribution(generator);
-         }
-    }
+    Matrix<T> lastInput; 
 
 public:
-    // Constructor: Random initialization
-    Dense(const std::shared_ptr<Matrix_Solver<T>>& solver, int in_features, int out_features)
-        : Layer<T>(solver), in(in_features), out(out_features), weights(in_features, out_features) {
-            initWeights();
-    }
-    
-    // Constructor: Manual weights (useful for debugging/loading weights)
-    Dense(const std::shared_ptr<Matrix_Solver<T>>& solver, int in_features, int out_features, const Matrix<T> w) 
-        : Layer<T>(solver), in(in_features), out(out_features), weights(w) {
+    // Costruttore con Solver e Optimizer (tramite Layer)
+    Dense(const std::shared_ptr<Matrix_Solver<T>>& solver, 
+          const std::shared_ptr<Optimizer<T>>& optimizer, 
+          int in_features, int out_features)
+        : Layer<T>(solver, optimizer), in(in_features), out(out_features), weights(in_features, out_features) {
     }
 
-    // --- FORWARD PASS ---
-    // Computes Y = X * W
+    // Inizializzazione pesi
+    void WeightInitialization(const WeightInit& technique) override {
+        size_t total_weights = (size_t)in * out;
+        T* wData = weights.Flatten();
+        
+        std::random_device rd;
+        std::default_random_engine generator(rd());
+        T std_dev;
+
+        if (technique == WeightInit::Xavier) {
+            std_dev = std::sqrt(static_cast<T>(2.0) / (in + out));
+        } else { 
+            std_dev = std::sqrt(static_cast<T>(2.0) / in);
+        }
+
+        std::normal_distribution<T> distribution(static_cast<T>(0.0), std_dev);
+        for(size_t i = 0; i < total_weights; ++i) {
+            wData[i] = distribution(generator);
+        }
+    }
+
     Matrix<T> Forward(const Matrix<T>& X) override {
-        // Dimension check: Input features must match layer input size
         if (X.cols() != (size_t)in) {
-            std::cerr << "Dense Error: Input dim " << X.cols() << " != Layer in " << in << std::endl;
             throw std::runtime_error("Dimension mismatch in Dense Forward");
         }
 
-        lastInput = X; // Save input for backward pass
-        
+        lastInput = X; 
         size_t batchSize = X.rows();
         Matrix<T> Y(batchSize, out); 
 
-        // Perform Matrix Multiplication using the Solver
         this->solver_->multiply(batchSize, out, in, X.Flatten(), weights.Flatten(), Y.Flatten());
-        
         return Y;
     }
 
-    // --- BACKWARD PASS ---
-    // Computes dL/dX (to pass to previous layer) and dL/dW (for weight update)
-    Matrix<T> Backward(const Matrix<T> grad, T learning_rate) override {
+    // CORRETTO: Aggiunta la & a grad per matchare la classe base
+    Matrix<T> Backward(const Matrix<T>& grad) override {
         size_t batchSize = grad.rows();
         
-        // 1. Compute Gradient w.r.t Input (dL/dX) -> passes to previous layer
-        // Formula: dX = dY * W^T
+        // 1. dL/dX = grad * W^T
         Matrix<T> W_T = weights.Transpose(); 
         Matrix<T> inputGrad(batchSize, in);
         this->solver_->multiply(batchSize, in, out, grad.Flatten(), W_T.Flatten(), inputGrad.Flatten());
 
-        // 2. Compute Gradient w.r.t Weights (dL/dW) -> used for update
-        // Formula: dW = X^T * dY
+        // 2. dL/dW = X^T * grad
         Matrix<T> X_T = lastInput.Transpose();
         Matrix<T> weightGrad(in, out);
         this->solver_->multiply(in, out, batchSize, X_T.Flatten(), grad.Flatten(), weightGrad.Flatten());
 
-        // 3. Update Weights (Gradient Descent)
-        // Formula: W = W - learning_rate * dW
-        T* wData = weights.Flatten();
-        T* gData = weightGrad.Flatten();
-        size_t total_weights = in * out;
-
-        for(size_t i = 0; i < total_weights; ++i) {
-            wData[i] -= learning_rate * gData[i];
+        // 3. Update Weights tramite l'Optimizer del Layer
+        if (this->optimizer_) {
+            this->optimizer_->Optimize(this->weights, weightGrad);
         }
 
         return inputGrad;
     }
     
-    // Getter for testing/debugging
     const Matrix<T>& getWeights() const { return weights; }
 };
 

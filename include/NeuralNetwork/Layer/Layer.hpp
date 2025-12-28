@@ -16,7 +16,7 @@ template <typename T>
 class Layer {
 protected:
     const std::shared_ptr<Matrix_Solver<T>> solver_; 
-    const Optimizer<T> optimizer_;
+    const std::shared_ptr<Optimizer<T>> optimizer_;
 public:
     // DEPRECATED
     Layer(const std::shared_ptr<Matrix_Solver<T>>& solver): solver_(solver), optimizer_(nullptr) {}
@@ -32,9 +32,6 @@ public:
     
     // DEPRECATED
     // Updated Backward signature to support Gradient Descent
-    virtual Matrix<T> Backward(const Matrix<T> grad, T learning_rate) = 0;
-
-    // Backward signature with general Optimizer
     virtual Matrix<T> Backward(const Matrix<T>& grad) = 0;
 
     // Weight initialization
