@@ -17,6 +17,8 @@ private:
     Matrix<T> h_state; // hidden state, memoria a breve termine
     Matrix<T> c_state; // Cell state, memoria a lungo termine
 
+    Matrix<T> input_cache;
+
     // Pesi e bias: W sono i pesi di input, U i pesi ricorrenti, b bias
     
     //Forget Gate
@@ -70,7 +72,11 @@ private:
         h_state = Matrix<T>(0, 0);
         c_state = Matrix<T>(0, 0);
     }
-
+    
+    void WeightInitialization(const WeightInit& technique) override {
+        // Per ora lo lasciamo vuoto o richiamiamo initMatrices() se necessario.
+        // Serve solo per soddisfare l'interfaccia di Layer.
+    }
     // Ogni volta che devo iniziare una nuova epoca faccio il reset dello stato
     void resetState() {
         // Mettiamo le dimensioni a 0 per forzare la ri-inizializzazione nel Forward
