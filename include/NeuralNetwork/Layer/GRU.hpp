@@ -123,5 +123,43 @@ private:
         
         // Salviamo hU_n grezzo nella cache perché serve per il gradiente del reset gate
         cache_Uh_prev = hU_n; 
+        // Pointers per loop veloce
+        const T* xz = XW_z.Flatten(); const T* uz = hU_z.Flatten(); const T* bz = b_z.Flatten();
+        const T* xr = XW_r.Flatten(); const T* ur = hU_r.Flatten(); const T* br = b_r.Flatten();
+        const T* xn = XW_n.Flatten(); const T* un = hU_n.Flatten(); const T* bn = b_n.Flatten();
+        const T* prev_h = prev_h_state.Flatten();
+        
+        T* out_h = next_h.Flatten();
+        T* cz = cache_z.Flatten();
+        T* cr = cache_r.Flatten();
+        T* cn = cache_n.Flatten();
 
+        size_t total = batch_size * hidden_size;
+
+        for (size_t i = 0; i < total; ++i) {
+            size_t col = i % hidden_size;
+
+            // Update Gate z
+            T z_val = sigmoid(xz[i] + uz[i] + bz[col]);
+            cz[i] = z_val;
+
+            // Reset Gate r
+            T r_val = sigmoid(xr[i] + ur[i] + br[col]);
+            cr[i] = r_val;
+
+            // Candidate n
+            // Formula: tanh(XW + r * (HU) + b)
+            T uh_part = un[i]; // H * U precalcolato
+            T n_val = tanh_act(xn[i] + (r_val * uh_part) + bn[col]);
+            cn[i] = n_val;
+
+            // Final Hidden State h
+            // h = (1-z)*n + z*h_prev
+            T h_val = (1.0 - z_val) * n_val + (z_val * prev_h[i]);
+            out_h[i] = h_val;
+        }
+
+        h_state = next_h;
+        return h_state;
+    }
         
