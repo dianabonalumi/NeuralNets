@@ -4,7 +4,7 @@
 #include "Layer.hpp"
 #include <cmath>
 #include <vector>
-#include <cstring> //se necessario per memset
+#include <random>
 
 template <typename T> 
 class LSTM : public Layer<T>  {
@@ -36,6 +36,27 @@ private:
     //Cache per backpropagation
     Matrix<T> cache_f, cache_i, cache_o, cache_c_bar, cache_tanh_c;
     Matrix<T> prev_h_state, prev_c_state;
+
+    //inizializzazione di una singola matrice con distribuzione normale
+    void initializeMatrix(Matrix<T>& mat, int fan_in, int fan_out, const WeightInit& technique, std::default_random_engine& generator) {
+        T std_dev;
+        
+        if (technique == WeightInit::Xavier) {
+            
+            std_dev = std::sqrt(static_cast<T>(2.0) / (fan_in + fan_out));
+        } else { 
+            
+            std_dev = std::sqrt(static_cast<T>(2.0) / fan_in);
+        }
+
+        std::normal_distribution<T> distribution(static_cast<T>(0.0), std_dev);
+        
+        T* data = mat.Flatten();
+        size_t size = mat.rows() * mat.cols();
+        for(size_t i = 0; i < size; ++i) {
+            data[i] = distribution(generator);
+        }
+    }
 
     public: 
     LSTM(const std::shared_ptr<Matrix_Solver<T>>& solver, 
@@ -72,21 +93,38 @@ private:
         h_state = Matrix<T>(0, 0);
         c_state = Matrix<T>(0, 0);
     }
-    
-    void WeightInitialization(const WeightInit& technique) override {
-        // Per ora lo lasciamo vuoto o richiamiamo initMatrices() se necessario.
-        // Serve solo per soddisfare l'interfaccia di Layer.
-    }
-    // Ogni volta che devo iniziare una nuova epoca faccio il reset dello stato
     void resetState() {
-        // Mettiamo le dimensioni a 0 per forzare la ri-inizializzazione nel Forward
         h_state = Matrix<T>(0, 0);
         c_state = Matrix<T>(0, 0);
     }
+    
+    void WeightInitialization(const WeightInit& technique) override {
+        std::random_device rd;
+        std::default_random_engine generator(rd());
+
+        // Inizializza Pesi Input (W)
+        // Fan-in = input_features, Fan-out = hidden_size
+        initializeMatrix(W_f, input_features, hidden_size, technique, generator);
+        initializeMatrix(W_i, input_features, hidden_size, technique, generator);
+        initializeMatrix(W_c, input_features, hidden_size, technique, generator);
+        initializeMatrix(W_o, input_features, hidden_size, technique, generator);
+
+        // Inizializza Pesi Ricorrenti (U)
+        // Fan-in = hidden_size, Fan-out = hidden_size
+        initializeMatrix(U_f, hidden_size, hidden_size, technique, generator);
+        initializeMatrix(U_i, hidden_size, hidden_size, technique, generator);
+        initializeMatrix(U_c, hidden_size, hidden_size, technique, generator);
+        initializeMatrix(U_o, hidden_size, hidden_size, technique, generator);
+
+        // Bias: Gia inizializzati a zero in initmatrices.
+    }
+        
+    
+    
 
     // Funzioni di attivazione helper (inline per brevità)
-    T sigmoid(T x) { return 1.0 / (1.0 + std::exp(-x)); }
-    T tanh_act(T x) { return std::tanh(x); }
+    inline T sigmoid(T x) { return 1.0 / (1.0 + std::exp(-x)); }
+    inline T tanh_act(T x) { return std::tanh(x); }
     inline T d_sigmoid(T y) { return y * (1.0 - y); }
     inline T d_tanh(T y) { return 1.0 - (y * y); }
 
