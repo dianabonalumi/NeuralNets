@@ -2,7 +2,7 @@
 #define OPTIMIZER_HPP
 
 #include <memory>
-#include "../../Matrix.hpp"
+#include "../Matrix.hpp"
 #include "../../matrix_solver.hpp"
 
 template <typename T>
