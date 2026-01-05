@@ -50,6 +50,10 @@ public:
 
         return out;
     }
+
+    Matrix<T> GetGradient() {
+        return Matrix<T>();
+    }
 };
 
 #endif
