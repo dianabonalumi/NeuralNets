@@ -16,19 +16,14 @@ class Decoder : public Architecture<T> {
 private:
     const std::shared_ptr<Matrix_Solver<T>> solver_;
     const std::shared_ptr<Optimizer<T>> optimizer_;
-    const std::shared_ptr<Loss<T>> loss_;
     const int in_shape_, out_shape_;
 
 public:
     Decoder(const std::shared_ptr<Matrix_Solver<T>>& solver,
         const std::shared_ptr<Optimizer<T>>& optimizer, 
-        const std::shared_ptr<Loss<T>>& loss,
         const int& in_shape,
         const int& out_shape) 
-        : solver_(solver), optimizer_(optimizer), loss_(loss), in_shape_(in_shape), out_shape_(out_shape) {
-    }
-
-    Matrix<T> Eval() {
+        : solver_(solver), optimizer_(optimizer), in_shape_(in_shape), out_shape_(out_shape) {
     }
 
     Matrix<T> Predict(const Matrix<T>& X) {

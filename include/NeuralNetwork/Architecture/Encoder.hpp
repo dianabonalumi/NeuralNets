@@ -22,17 +22,13 @@ private:
 
 public:
     Encoder(const std::shared_ptr<Matrix_Solver<T>>& solver,
-        const std::shared_ptr<Optimizer<T>>& optimizer, 
-        const std::shared_ptr<Loss<T>>& loss,
+        const std::shared_ptr<Optimizer<T>>& optimizer,
         const int& window,
         const int& stride,
         const int& in_shape,
         const int& out_shape) 
-        : solver_(solver), optimizer_(optimizer), loss_(loss), in_shape_(in_shape), out_shape_(out_shape),
+        : solver_(solver), optimizer_(optimizer), in_shape_(in_shape), out_shape_(out_shape),
         window_(window), stride_(stride) {
-    }
-
-    Matrix<T> Eval() {
     }
 
     Matrix<T> Predict(const Matrix<T>& X) {
