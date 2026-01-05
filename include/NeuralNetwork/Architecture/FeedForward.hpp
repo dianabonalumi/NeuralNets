@@ -54,6 +54,10 @@ public:
     Matrix<T> GetGradient() {
         return Matrix<T>();
     }
+
+    void SetGradient(Matrix<T>& gradient) {
+        
+    }
 };
 
 #endif

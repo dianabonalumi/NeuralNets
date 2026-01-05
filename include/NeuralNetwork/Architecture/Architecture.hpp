@@ -10,6 +10,7 @@ public:
     virtual Matrix<T> Eval(const Matrix<T>&, const Matrix<T>&) = 0;
     virtual Matrix<T> Predict(const Matrix<T>&) = 0;
     virtual Matrix<T> GetGradient() = 0;
+    virtual void SetGradient(const Matrix<T>&) = 0;
 };
 
 #endif
