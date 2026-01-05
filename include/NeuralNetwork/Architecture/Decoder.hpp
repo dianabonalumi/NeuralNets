@@ -37,11 +37,7 @@ public:
     Matrix<T> Predict(const Matrix<T>& X) {
     }
 
-    Matrix<T> GetGradient() {
-        
-    }
-
-    void SetGradient(Matrix<T>& gradient) {
+    Matrix<T> Backward(const Matrix<T>& X, const Matrix<T>& grad) {
         
     }
 };
