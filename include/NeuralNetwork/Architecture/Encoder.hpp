@@ -32,10 +32,7 @@ public:
         window_(window), stride_(stride) {
     }
 
-    Matrix<T> Train(const Matrix<T>& X, const Matrix<T>& Y) {
-    }
-
-    Matrix<T> Eval(const Matrix<T>& X, const Matrix<T>& Y) {
+    Matrix<T> Eval() {
     }
 
     Matrix<T> Predict(const Matrix<T>& X) {

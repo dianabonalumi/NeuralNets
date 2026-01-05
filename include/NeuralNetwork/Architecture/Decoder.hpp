@@ -28,17 +28,14 @@ public:
         : solver_(solver), optimizer_(optimizer), loss_(loss), in_shape_(in_shape), out_shape_(out_shape) {
     }
 
-    Matrix<T> Train(const Matrix<T>& X, const Matrix<T>& Y) {
-    }
-
-    Matrix<T> Eval(const Matrix<T>& X, const Matrix<T>& Y) {
+    Matrix<T> Eval() {
     }
 
     Matrix<T> Predict(const Matrix<T>& X) {
     }
 
     Matrix<T> Backward(const Matrix<T>& X, const Matrix<T>& grad) {
-        
+
     }
 };
 
