@@ -3,6 +3,7 @@
 
 #include "Architecture.hpp"
 #include "../Layer/Layer.hpp"
+#include "../Layer/LSTM.hpp" //aggiunto io per far funzionare cast e resetstate
 #include "../Loss/Loss.hpp"
 #include "../Matrix.hpp"
 #include "../../matrix_solver.hpp"
@@ -12,7 +13,7 @@
 #include <memory>
 
 template <typename T>
-class Encoder : public Architecture<T> {
+class Encoder : public Architecture<T> { 
 private:
     const std::shared_ptr<Matrix_Solver<T>> solver_;
     const std::shared_ptr<Optimizer<T>> optimizer_;
@@ -48,7 +49,7 @@ public:
         T* dst = window_mat.Flatten();
         
         for(int i=0; i<window_; ++i) {
-            if(start_idx + i < in_shape_) {    ///!!
+            if(start_idx + i < in_shape_) {   
                 dst[i] = src[start_idx + i];
             } else {
                 dst[i] = 0; 
