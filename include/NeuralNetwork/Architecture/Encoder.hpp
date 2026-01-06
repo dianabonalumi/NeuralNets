@@ -62,7 +62,7 @@ public:
     Matrix<T> Predict(const Matrix<T>& X) {
 
         // calcolo il numero di finestre
-        int num_windows = (in_shape - window_) / stride_ + 1;
+        int num_windows = (in_shape_ - window_) / stride_ + 1;
         if (num_windows <= 0) num_windows = 1;
         
         
@@ -184,7 +184,5 @@ Matrix<T> Backward(const Matrix<T>& X, const Matrix<T>& grad) {
         return dX;
     }
 };
-
-#endif
 
 #endif
