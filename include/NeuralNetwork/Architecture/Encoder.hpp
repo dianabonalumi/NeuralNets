@@ -110,7 +110,80 @@ public:
 
         return latent_output;
     }
+Matrix<T> Backward(const Matrix<T>& X, const Matrix<T>& grad) {
+        
+        Matrix<T> dX(1, in_shape_); 
+        T* dx_ptr = dX.Flatten();
+        for(int k=0; k<in_shape_; ++k) dx_ptr[k] = 0;
 
+        int window_idx = 0;
+        const T* grad_ptr = grad.Flatten();
+
+        // Cast per il reset
+        auto lstm_ptr = std::dynamic_pointer_cast<LSTM<T>>(lstm_layer_);
+
+        for (int i = 0; i <= in_shape_ - window_; i += stride_) {
+            
+           //resetto lo stato
+            if(lstm_ptr) lstm_ptr->resetState();
+
+            // eseguo di nuovo la forward per settare la cache giusta nei layer
+            Matrix<T> x_window = getWindow(X, i);
+            Matrix<T> lstm_out = lstm_layer_->Forward(x_window);
+            
+            // rifaccio la slice dell'ultima riga per avere i dati
+            int hidden_size = lstm_out.cols();
+            Matrix<T> last_step(1, hidden_size);
+            const T* lstm_data = lstm_out.Flatten();
+            T* last_step_data = last_step.Flatten();
+            int start_last_row = (window_ - 1) * hidden_size;
+            for(int k=0; k<hidden_size; ++k) last_step_data[k] = lstm_data[start_last_row + k];
+
+            // forward dense
+            dense_layer_->Forward(last_step);
+
+            // ora inizia la backward
+            // estrazione gradiente corrispondente alla finestra
+            Matrix<T> current_grad(1, out_shape_);
+            T* cg_ptr = current_grad.Flatten();
+            for(int k=0; k<out_shape_; ++k) {
+                cg_ptr[k] = grad_ptr[window_idx * out_shape_ + k];
+            }
+
+            // Backward Dense
+            Matrix<T> d_dense_input = dense_layer_->Backward(current_grad);
+
+            // preparazione del gradiente
+            Matrix<T> d_lstm_output(window_, hidden_size); 
+            T* d_lstm_ptr = d_lstm_output.Flatten();
+           
+            // azzero tutto
+            for(int k=0; k<window_*hidden_size; ++k) d_lstm_ptr[k] = 0;
+
+            // copio il gradiente del dense nell'ultima riga
+            const T* dense_back_ptr = d_dense_input.Flatten();
+            for(int k=0; k<hidden_size; ++k) {
+                d_lstm_ptr[start_last_row + k] = dense_back_ptr[k];
+            }
+
+            // Backward LSTM
+            Matrix<T> d_window = lstm_layer_->Backward(d_lstm_output);
+
+            // accumulo del gradiente
+            const T* dw_ptr = d_window.Flatten();
+            for(int k=0; k<window_; ++k) {
+                if(i + k < in_shape_) {
+                    dx_ptr[i + k] += dw_ptr[k];
+                }
+            }
+
+            window_idx++;
+        }
+
+        return dX;
     }
+};
+
+#endif
 
 #endif
