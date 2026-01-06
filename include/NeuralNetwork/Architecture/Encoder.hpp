@@ -138,6 +138,7 @@ Matrix<T> Backward(const Matrix<T>& X, const Matrix<T>& grad) {
            
             // azzero tutto
             for(int k=0; k<window_*hidden_size; ++k) d_lstm_ptr[k] = 0;
+            int start_last_row = (window_ - 1) * hidden_size;
 
             // copio il gradiente del dense nell'ultima riga
             const T* dense_back_ptr = d_dense_input.Flatten();
