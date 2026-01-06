@@ -51,7 +51,7 @@ public:
         return out;
     }
 
-    Matrix<T> Backward(const Matrix<T>& X, const Matrix<T>& grad) {
+    Matrix<T> Backward(const Matrix<T>& X) {
         return Matrix<T>();
     }
 };

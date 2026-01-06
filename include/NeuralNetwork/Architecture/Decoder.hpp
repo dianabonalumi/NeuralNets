@@ -29,7 +29,7 @@ public:
     Matrix<T> Predict(const Matrix<T>& X) {
     }
 
-    Matrix<T> Backward(const Matrix<T>& X, const Matrix<T>& grad) {
+    Matrix<T> Backward(const Matrix<T>& grad) {
 
     }
 };

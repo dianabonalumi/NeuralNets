@@ -17,8 +17,8 @@ public:
         const std::shared_ptr<Optimizer<T>>& optimizer,
         int in_shape, int bottleneck_shape,
         int window_size, int stride) {
-            this->enc = Encoder<T>(solver, optimizer, window_size, stride, in_shape, out_shape);
-            this->dec = Decoder<T>(solver, optimizer, in_shape, out_shape);
+            this->enc = Encoder<T>(solver, optimizer, window_size, stride, in_shape, bottleneck_shape);
+            this->dec = Decoder<T>(solver, optimizer, bottleneck_shape, in_shape);
     }
 
     Matrix<T> Predict(const Matrix<T>& X) {
@@ -27,7 +27,7 @@ public:
         return this->dec.Predict(encoded);
     }
 
-    Matrix<T> Backward(const Matrix<T>& X, const Matrix<T>& grad) {
+    Matrix<T> Backward(const Matrix<T>& grad) {
         Matrix<T> decGrad = this->dec.Backward(X, grad);
 
         return this->enc.Backward(X, decGrad);
