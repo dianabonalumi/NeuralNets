@@ -4,47 +4,47 @@
 #include "Architecture.hpp"
 #include "../Layer/Layer.hpp"
 #include "../Layer/LSTM.hpp"
-#include "../Loss/Loss.hpp"
+#include "../Layer/Dense.hpp"
 #include "../Matrix.hpp"
 #include "../../matrix_solver.hpp"
 #include "../Optimizer/Optimizer.hpp"
 
 #include <vector>
 #include <memory>
+#include <string>
 
 template <typename T>
 class Encoder : public Architecture<T> { 
 private:
     const std::shared_ptr<Matrix_Solver<T>> solver_;
     const std::shared_ptr<Optimizer<T>> optimizer_;
-    const std::shared_ptr<Loss<T>> loss_;
     const int window_, stride_;
-    const int in_shape_, out_shape_;
+    const int in_shape_, out_shape_, hidden_state_;
     
-    std::shared_ptr<Layer<T>> lstm_layer_;
-    std::shared_ptr<Layer<T>> dense_layer_;
+    LSTM<T> lstm_layer_;
+    Dense<T> dense_layer_;
+
+    Matrix<T> grad;
 
 public:
     Encoder(const std::shared_ptr<Matrix_Solver<T>>& solver,
         const std::shared_ptr<Optimizer<T>>& optimizer,
-        const int& window,
-        const int& stride,
-        const int& in_shape,
-        const int& out_shape) 
+        const int window,
+        const int stride,
+        const int in_shape,
+        const int out_shape,
+        const int hidden_state) 
         : solver_(solver), optimizer_(optimizer), in_shape_(in_shape), out_shape_(out_shape),
-        window_(window), stride_(stride) {
-    }
-    
-
-    //aggiungo metodo per impostare i layer LSTM e Dense
-    void setLayers(std::shared_ptr<Layer<T>> lstm, std::shared_ptr<Layer<T>> dense) {
-        lstm_layer_ = lstm;
-        dense_layer_ = dense;
-    }
+        hidden_state_(hidden_state), window_(window), stride_(stride),
+        lstm_layer_(solver, optimizer, in_shape, hidden_state),
+        dense_layer_(solver, optimizer, hidden_state, out_shape) {
+            lstm_layer_.WeightInitialization(WeightInit::He);
+            dense_layer_.WeightInitialization(WeightInit::He);
+        }
     
     //aggiungo metodo per estrarre finestra
     Matrix<T> getWindow(const Matrix<T>& full_signal, int start_idx) {
-        Matrix<T> window_mat(window_, 1); 
+        Matrix<T> window_mat(1, window_); 
         
         const T* src = full_signal.Flatten();
         T* dst = window_mat.Flatten();
@@ -61,106 +61,85 @@ public:
 
 
     Matrix<T> Predict(const Matrix<T>& X) {
-
         // calcolo il numero di finestre
         int num_windows = (in_shape_ - window_) / stride_ + 1;
         if (num_windows <= 0) num_windows = 1;
         
         
-        Matrix<T> latent_output(num_windows, out_shape_);
-        T* out_ptr = latent_output.Flatten();
-
+        Matrix<T> latent_output(1, out_shape_);
         
         int window_idx = 0;
+        Matrix<T> lstm_out;
+        this->lstm_layer_.resetState();
         for (int i = 0; i <= in_shape_ - window_; i += stride_) {
-            
-            
-
-            //Estraggo finestra
             Matrix<T> x_window = getWindow(X, i);
 
-            //faccio LSTM forward
-            Matrix<T> lstm_out = lstm_layer_->Forward(x_window);
-
-            // estraggo ultimo output
-            int hidden_size = lstm_out.cols();
-            Matrix<T> last_step(1, hidden_size);
-            
-            const T* lstm_data = lstm_out.Flatten();
-            T* last_step_data = last_step.Flatten();
-            
-            int start_last_row = (window_ - 1) * hidden_size;
-            
-            for(int k=0; k<hidden_size; ++k) {
-                last_step_data[k] = lstm_data[start_last_row + k];
-            }
-
-            // faccio dense forward
-            Matrix<T> dense_out = dense_layer_->Forward(last_step);
-
-            // infine salvo il risultato
-            const T* d_ptr = dense_out.Flatten();
-            for(int k=0; k<out_shape_; ++k) {
-                out_ptr[window_idx * out_shape_ + k] = d_ptr[k];
-            }
-            
-            window_idx++;
+            lstm_out = lstm_layer_.Forward(x_window);
         }
+
+        latent_output = dense_layer_.Forward(lstm_out);
 
         return latent_output;
     }
-Matrix<T> Backward(const Matrix<T>& X, const Matrix<T>& grad) {
+
+    Matrix<T> Eval(const Matrix<T>& target) { return target; }
+
+    void SetGradient(const Matrix<T>& grad) {
+        this->grad = grad;
+    }
+
+    Matrix<T> Backward() {
+        Matrix<T> g = dense_layer_.Backward(grad);
+
+        g = lstm_layer_.Backward(g);
+
+        return g;
+    }
+
+    T* Serialize() {
+        // Serialize LSTM then Dense
+        T* lstm_data = lstm_layer_.Serialize();
+        T* dense_data = dense_layer_.Serialize();
         
-        Matrix<T> dX(1, in_shape_); 
-        T* dx_ptr = dX.Flatten();
-        for(int k=0; k<in_shape_; ++k) dx_ptr[k] = 0;
-
-        int window_idx = 0;
-        const T* grad_ptr = grad.Flatten();
-
+        size_t lstm_size = static_cast<size_t>(lstm_data[0]) + 1;
+        size_t dense_size = static_cast<size_t>(dense_data[0]) + 1;
+        size_t total_size = lstm_size + dense_size;
         
-        //inizio backward
-        for (int i = 0; i <= in_shape_ - window_; i += stride_) {
-            
-            Matrix<T> current_grad(1, out_shape_);
-            T* cg_ptr = current_grad.Flatten();
-            for(int k=0; k<out_shape_; ++k) {
-                cg_ptr[k] = grad_ptr[window_idx * out_shape_ + k];
-            }
-
-            // Backward Dense
-            Matrix<T> d_dense_input = dense_layer_->Backward(current_grad);
-
-            // preparazione del gradiente
-            int hidden_size = d_dense_input.cols();
-            Matrix<T> d_lstm_output(window_, hidden_size); 
-            T* d_lstm_ptr = d_lstm_output.Flatten();
-           
-            // azzero tutto
-            for(int k=0; k<window_*hidden_size; ++k) d_lstm_ptr[k] = 0;
-            int start_last_row = (window_ - 1) * hidden_size;
-
-            // copio il gradiente del dense nell'ultima riga
-            const T* dense_back_ptr = d_dense_input.Flatten();
-            for(int k=0; k<hidden_size; ++k) {
-                d_lstm_ptr[start_last_row + k] = dense_back_ptr[k];
-            }
-
-            // Backward LSTM
-            Matrix<T> d_window = lstm_layer_->Backward(d_lstm_output);
-
-            // accumulo del gradiente
-            const T* dw_ptr = d_window.Flatten();
-            for(int k=0; k<window_; ++k) {
-                if(i + k < in_shape_) {
-                    dx_ptr[i + k] += dw_ptr[k];
-                }
-            }
-
-            window_idx++;
+        T* buffer = new T[total_size + 1];
+        buffer[0] = static_cast<T>(total_size);
+        
+        // Copy LSTM data
+        for(size_t i = 0; i < lstm_size; ++i) {
+            buffer[i + 1] = lstm_data[i];
         }
+        
+        // Copy Dense data
+        for(size_t i = 0; i < dense_size; ++i) {
+            buffer[lstm_size + i + 1] = dense_data[i];
+        }
+        
+        delete[] lstm_data;
+        delete[] dense_data;
+        
+        return buffer;
+    }
 
-        return dX;
+    void Deserialize(T* data) {
+        if (!data) return;
+        
+        size_t lstm_size = static_cast<size_t>(data[1]) + 1;
+        
+        // Deserialize LSTM
+        T* lstm_buffer = new T[lstm_size];
+        for(size_t i = 0; i < lstm_size; ++i) {
+            lstm_buffer[i] = data[i + 1];
+        }
+        lstm_layer_.Deserialize(lstm_buffer);
+        delete[] lstm_buffer;
+        
+        // Deserialize Dense
+        T* dense_buffer = &data[lstm_size + 1];
+        dense_layer_.Deserialize(dense_buffer);
     }
 };
 
