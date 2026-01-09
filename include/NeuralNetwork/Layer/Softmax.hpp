@@ -34,9 +34,22 @@ public:
     }
 
     Matrix<T> Backward(const Matrix<T>& grad) override {
-        // Nota: Spesso Softmax + CrossEntropy si semplifica in (pred - target)
-        // Se implementata standalone, la derivata è più complessa (Jacobiana).
-        return grad; // Implementazione semplificata per uso combinato con Loss
+        // Jacobian-vector product for softmax:
+        // For each row: dx = p * (g - sum(p * g))
+        size_t rows = grad.rows();
+        size_t cols = grad.cols();
+        Matrix<T> dx(rows, cols);
+
+        for (size_t i = 0; i < rows; ++i) {
+            T dot = static_cast<T>(0);
+            for (size_t j = 0; j < cols; ++j) {
+                dot += grad.Get(i, j) * lastOutput.Get(i, j);
+            }
+            for (size_t j = 0; j < cols; ++j) {
+                dx.Set(i, j, lastOutput.Get(i, j) * (grad.Get(i, j) - dot));
+            }
+        }
+        return dx;
     }
 
     void WeightInitialization(const WeightInit& technique) override {}
