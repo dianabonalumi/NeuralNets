@@ -52,16 +52,21 @@ void test(std::shared_ptr<Autoencoder<float>>& arch, DataLoader<float>& data_tes
 }
 
 void plot_data(std::shared_ptr<Autoencoder<float>>& arch, DataLoader<float>& data_test) {
-    data_test.shuffle();
-    Matrix<float> X = data_test.getBatch().first;
+    for(int i = 0;i < 5;i++) {
+        Matrix<float> X = data_test.getBatch().first;
 
-    Matrix<float> out = arch->Predict(X);
+        Matrix<float> out = arch->Predict(X);
 
-    std::ofstream loss_file("plot.csv");
-    loss_file << "predict,target\n";
+        std::string f_name = "plot";
+        f_name += std::to_string(i);
+        f_name += ".csv";
 
-    for(int i = 0;i < out.cols();i++) {
-        loss_file << out.Get(0,i) << "," << X.Get(0,i) << "\n";
+        std::ofstream loss_file(f_name);
+        loss_file << "predict,target\n";
+
+        for(int i = 0;i < out.cols();i++) {
+            loss_file << out.Get(0,i) << "," << X.Get(0,i) << "\n";
+        }
     }
 }
 
@@ -71,7 +76,7 @@ int main() {
     std::shared_ptr<Loss<float>> loss = std::make_shared<MSE<float>>(solver);
 
     std::shared_ptr<Autoencoder<float>> arch = std::make_shared<Autoencoder<float>>(
-        solver, optim, loss, 140, 100, 128, 40, 20);
+        solver, optim, loss, 140, 30, 128, 40, 20);
 
     arch->Restore("models/best");
     std::cout << "Model restored" << std::endl;
