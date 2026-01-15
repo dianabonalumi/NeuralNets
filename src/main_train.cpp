@@ -78,6 +78,7 @@ void train(std::shared_ptr<Autoencoder<float>>& arch, DataLoader<float>& data_tr
         loss_file << i + 1 << "," << tr_loss << "," << val_loss << std::endl;
 
         if(val_loss < best) {
+            std::cout << "New best validation loss: " << val_loss << "\nModel saved!" << "\n";
             arch->Save("models/best");
             best = val_loss;
         }
@@ -99,7 +100,7 @@ int main() {
     std::shared_ptr<Loss<float>> loss = std::make_shared<MSE<float>>(solver);
 
     std::shared_ptr<Autoencoder<float>> arch = std::make_shared<Autoencoder<float>>(
-        solver, optim, loss, 140, 100, 128, 40, 20);
+        solver, optim, loss, 140, 30, 128, 40, 20);
 
     train(arch, data_train, data_val, loss, NUM_EPOCHS);
     std::cout << "Train completed" << std::endl;
