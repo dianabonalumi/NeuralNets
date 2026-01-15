@@ -33,7 +33,7 @@ public:
         : solver_(solver), optimizer_(optimizer), in_shape_(in_shape), out_length_(out_length),
         hidden_state_(hidden_state),
         lstm_layer_(solver, optimizer, in_shape, hidden_state),
-        dense_layer_(solver, optimizer, hidden_state, out_length) {
+        dense_layer_(solver, optimizer, hidden_state + in_shape, out_length) {
             lstm_layer_.WeightInitialization(WeightInit::He);
             dense_layer_.WeightInitialization(WeightInit::He);
         }
@@ -46,7 +46,17 @@ public:
         for(int i = 0;i < this->out_length_;i++) {
             c = this->lstm_layer_.Forward(c);
         }
-        result = this->dense_layer_.Forward(c);
+
+        // add skip connection
+        Matrix<T> skip_connection(1, hidden_state_ + in_shape_);
+        for(int i = 0;i < c.cols();i++) {
+            skip_connection.Set(0, i, c.Get(0, i));
+        }
+        for(int i = 0;i < X.cols();i++) {
+            skip_connection.Set(0, hidden_state_ + i, X.Get(0, i));
+        }
+
+        result = this->dense_layer_.Forward(skip_connection);
 
         return result;
     }
