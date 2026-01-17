@@ -11,7 +11,14 @@
 
 #include "../include/factory_m.hpp"
 
-#define NUM_EPOCHS 50
+#define NUM_EPOCHS 10
+#define INPUT_SHAPE 140
+#define BOTTLENECK 30
+#define HIDDEN_SHAPE 128
+#define WINDOW 40
+#define STRIDE 20
+
+#define LEARNING_RATE 0.0001
 
 // g++ src/main.cpp -mavx -mfma -mavx2 -fopenmp -lpthread -o main
 
@@ -30,7 +37,7 @@ void train(std::shared_ptr<Autoencoder<float>>& arch, DataLoader<float>& data_tr
     std::shared_ptr<Loss<float>>& loss, int num_epochs) {
 
     std::ofstream loss_file("loss_log.csv");
-    loss_file << "epoch,train_loss,eval_loss\n";
+    loss_file << "epoch,train_loss,val_loss\n";
 
     float tr_loss, val_loss, best = 1000;
 
@@ -42,14 +49,18 @@ void train(std::shared_ptr<Autoencoder<float>>& arch, DataLoader<float>& data_tr
         tr_loss = 0;
 
         data_train.shuffle();
-        int j = 1;
+        float j = 1;
         while(!data_train.isFinished()) {
             Matrix<float> X = data_train.getBatch().first;
 
             Matrix<float> out = arch->Predict(X);
-            tr_loss += arch->Eval(X).Get(0,0);
-            if(j % 10 == 1)
-                std::cout << "Training iteration: " << j << "\tLoss: " << tr_loss / (float)j << std::endl; 
+            float val = arch->Eval(X).Get(0,0);
+
+            // std::cout << "Val: " << val << std::endl;
+            tr_loss += val;
+
+            if((int)j % 100 == 0)
+                std::cout << "Training iteration: " << j << "\tLoss: " << tr_loss / j << std::endl; 
             arch->Backward();
             j++;
         }
@@ -66,9 +77,8 @@ void train(std::shared_ptr<Autoencoder<float>>& arch, DataLoader<float>& data_tr
 
             Matrix<float> out = arch->Predict(X);
             val_loss += arch->Eval(X).Get(0,0);
-            if(j % 10 == 1)
-                std::cout << "Validation iteration: " << j << "\tLoss: " << val_loss / (float)j << std::endl; 
-            arch->Backward();
+            if((int)j % 10 == 0)
+                std::cout << "Validation iteration: " << j << "\tLoss: " << val_loss / j << std::endl; 
             j++;
         }
 
@@ -76,6 +86,7 @@ void train(std::shared_ptr<Autoencoder<float>>& arch, DataLoader<float>& data_tr
         std::cout << "Validation loss: " << val_loss << std::endl;
 
         loss_file << i + 1 << "," << tr_loss << "," << val_loss << std::endl;
+        loss_file.flush();
 
         if(val_loss < best) {
             std::cout << "New best validation loss: " << val_loss << "\nModel saved!" << "\n";
@@ -96,11 +107,11 @@ int main() {
     data_val.loadCSV("dataset2/val.csv", "dataset2/val_labels.csv");
     // data_val.loadCSV("../dataset2/val.csv", "../dataset2/val_labels.csv");
 
-    std::shared_ptr<Optimizer<float>> optim = std::make_shared<AdamW<float>>(solver, 0.0001);
+    std::shared_ptr<Optimizer<float>> optim = std::make_shared<AdamW<float>>(solver, LEARNING_RATE);
     std::shared_ptr<Loss<float>> loss = std::make_shared<MSE<float>>(solver);
 
     std::shared_ptr<Autoencoder<float>> arch = std::make_shared<Autoencoder<float>>(
-        solver, optim, loss, 140, 30, 128, 40, 20);
+        solver, optim, loss, INPUT_SHAPE, BOTTLENECK, HIDDEN_SHAPE, WINDOW, STRIDE);
 
     train(arch, data_train, data_val, loss, NUM_EPOCHS);
     std::cout << "Train completed" << std::endl;
