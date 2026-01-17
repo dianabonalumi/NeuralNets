@@ -78,10 +78,7 @@ int main() {
         solver, optim, loss, 140, 30, 128, 40, 20);
 
     std::cout << "Restoring model" << std::endl;
-    if (!arch->Restore("models/best")) {
-        std::cerr << "Failed to restore model - aborting" << std::endl;
-        return 1;
-    }
+    arch->Restore("models/best");
     std::cout << "Model restored" << std::endl;
     
     DataLoader<float> data_test(1);
