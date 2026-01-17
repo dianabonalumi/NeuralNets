@@ -8,70 +8,75 @@ The entire system is templated (`<typename T>`) to support various data types su
 
 ## Module Structure and Components
 
-The module consists of an abstract interface and several concrete implementations that handle linear transformations and non-linear activations:
+The module consists of an abstract interface and several concrete implementations:
 
 * **`Layer.hpp`**: The abstract interface defining the contract for all computational stages.
 * **`Dense.hpp`**: Implementation of the primary linear transformation layer (Fully Connected).
-* **`Sigmoid.hpp`**: Implementation of the Sigmoid non-linear activation function.
-* **`ReLU.hpp`**: Implementation of the Rectified Linear Unit (ReLU) non-linear activation function.
-* **`Softmax.hpp`**: Implementation of the Softmax activation layer for probability distribution.
-* **`WeightInitialization.hpp`**: Definitions for standard weight initialization techniques.
+* **`Sigmoid.hpp`, `ReLU.hpp`, `Softmax.hpp`**: Non-linear activation functions.
+* **`CNN1D.hpp`**: 1D Convolutional layer for temporal or sequential feature extraction.
+* **`MaxPooling1D.hpp`**: Downsampling layer for spatial variance reduction.
+* **`LSTM.hpp`**: Long Short-Term Memory layer for handling long-range dependencies in sequences.
+* **`WeightInitialization.hpp`**: Definitions for standard weight initialization techniques (He, Xavier).
 
 ---
 
 ## 1. The Layer Abstraction (`Layer.hpp`)
 
-`Layer.hpp` establishes the fundamental interface that every component in the neural network pipeline must adhere to. This abstraction ensures that different layer types can be chained together seamlessly.
+`Layer.hpp` establishes the fundamental interface. This ensures that different layer types (Linear, Convolutional, Recurrent) can be chained together seamlessly.
 
 ### Core Contract
-* **`Forward(const Matrix<T>& X)`**: Defines the data flow. It takes an input matrix $X$ (including the batch dimension) and returns the layer's output matrix.
-* **`Backward(const Matrix<T>& grad)`**: Defines the error flow. The layer calculates the gradient with respect to its own input ($\frac{\partial L}{\partial X}$) and, if applicable, delegates weight updates to an internal **Optimizer**.
-* **`WeightInitialization(const WeightInit& technique)`**: A mandatory method for all layers to handle weight setup according to modern standards (He or Xavier).
+* **`Forward(X)`**: Takes an input matrix $X$ and returns the layer's output.
+* **`Backward(grad)`**: Calculates the gradient with respect to the input ($\frac{\partial L}{\partial X}$) and delegates parameter updates (Weights/Biases) to an internal **Optimizer**.
+* **`WeightInitialization(technique)`**: Sets up weight variance based on the layer type and activation function to prevent vanishing/exploding gradients.
 
 ---
 
-## 2. Weight Initialization (`WeightInitialization.hpp`)
+## 2. Linear and Activation Layers
 
-Proper initialization is critical to prevent numerical instability, such as "Vanishing" or "Exploding" gradients, during the early stages of training. The module provides an enumeration to select the appropriate strategy based on the layer's activation function.
+### Dense Layer (`Dense.hpp`)
+The primary linear transformation layer. It computes $Y = X \times W$. It decouples gradient calculation from weight updates by passing the weight gradient ($\frac{\partial L}{\partial W}$) to the assigned `Optimizer`.
 
-
-### Supported Techniques
-* **Xavier (Glorot) Initialization**: Designed for layers with symmetric activation functions like **Sigmoid** or **Tanh**. It maintains a stable signal variance by scaling weights based on both input and output dimensions: $\sigma = \sqrt{\frac{2}{in + out}}$.
-* **He Initialization**: Specifically optimized for **ReLU** activation functions. Since ReLU "shuts off" half of the input space, this technique compensates by using a larger variance based solely on the input dimension: $\sigma = \sqrt{\frac{2}{in}}$.
-
-In the `Dense` layer implementation, these techniques utilize a normal distribution to break symmetry and ensure neurons learn distinct features.
-
----
-
-## 3. The Linear Transformation Layer (`Dense.hpp`)
-
-The `Dense` layer (Fully Connected) is responsible for the core weighted summation in the network.
-
-### Mathematical Logic and Decoupled Optimization
-**A. Forward Pass:**
-Computes $Output = X \times W$. The input $X$ is cached as `lastInput` for use during the backward phase.
-
-**B. Backward Pass (The Modular Approach):**
-The architecture decouples **Gradient Calculation** from **Weight Updating**:
-1.  **Gradient Propagation**: Calculates $\frac{\partial L}{\partial X}$ to inform previous layers.
-2.  **Weight Gradient**: Calculates $\frac{\partial L}{\partial W}$ based on the cached `lastInput`.
-3.  **Delegated Update**: Passes the calculated gradient to the assigned `Optimizer` (e.g., AdamW), allowing for advanced learning logic without bloating the layer code.
+### Activation Functions
+* **ReLU**: $f(x) = \max(0, x)$. Provides sparse activation and prevents gradient saturation.
+* **Sigmoid**: $f(x) = \frac{1}{1 + e^{-x}}$. Maps values to a $(0, 1)$ range.
+* **Softmax**: Converts raw scores into probabilities. Implements the **"Max Trick"** for numerical stability to prevent floating-point overflow during exponentiation.
 
 ---
 
-## 4. Activation Functions
+## 3. Convolutional Components (1D)
 
-Activation layers introduce non-linearity and operate **element-wise**. They do not possess learnable weights.
+Designed for sequential data where local patterns are shift-invariant.
 
-### A. Rectified Linear Unit (`ReLU.hpp`)
-* **Forward Pass**: $f(x) = \max(0, x)$.
-* **Backward Pass**: Passes the gradient through for positive inputs and blocks it (sets to zero) for non-positive inputs.
 
-### B. Sigmoid Activation (`Sigmoid.hpp`)
-* **Forward Pass**: $f(x) = \frac{1}{1 + e^{-x}}$.
-* **Backward Pass**: The derivative is calculated using the cached output ($f(x)$): $grad \cdot (f(x) \cdot (1 - f(x)))$.
 
-### C. Softmax Activation (`Softmax.hpp`)
-Converts raw scores into a probability distribution.
-* **Numerical Stability**: Implements a "Max Trick" (subtracting the row maximum before exponentiation) to prevent floating-point overflow.
-* **Optimization Note**: Often paired with a Cross-Entropy loss function, simplifying the combined gradient to $(predictions - targets)$.
+### A. CNN1D (`CNN1D.hpp`)
+* **Forward Pass**: Slides a set of learnable filters across the input sequence. Each filter performs a dot product to produce a feature map.
+* **Backward Pass**: Computes gradients for the filters and the input data. Filter updates are managed by the optimizer to allow for adaptive learning.
+
+### B. MaxPooling1D (`MaxPooling1D.hpp`)
+* **Purpose**: Reduces the dimensionality of feature maps while retaining the most prominent features.
+* **Logic**: Slides a window across the input and selects the maximum value.
+* **Backward Pass**: A "Route" gradient approach—the gradient is passed back only to the index that produced the maximum value during the forward pass.
+
+---
+
+## 4. Recurrent Components: LSTM (`LSTM.hpp`)
+
+The **Long Short-Term Memory** layer is designed to solve the vanishing gradient problem in standard RNNs by using a gated architecture.
+
+
+
+### The Gating Mechanism
+The LSTM maintains a **Cell State** ($c_t$) and a **Hidden State** ($h_t$) regulated by three gates:
+1.  **Forget Gate**: Decides what information to discard from the cell state.
+2.  **Input Gate**: Decides which new values to update in the cell state.
+3.  **Output Gate**: Decides what the next hidden state should be based on the cell state.
+
+### Implementation Details
+* **Forward Pass**: Iterates through the time steps of the input sequence, updating the internal gates and states at each step.
+* **Backward Pass (BPTT)**: Implements **Backpropagation Through Time**. Gradients are accumulated across all time steps to update the gate weights.
+* **Complexity**: Managed via the `Matrix_Solver` to handle the multiple matrix multiplications required for the gate logic ($W_f, W_i, W_o, W_c$).
+
+---
+
+Would you like me to create a specific documentation section for the **WeightInitialization** logic applied to these new layers (e.g., how to initialize LSTM gates)?
