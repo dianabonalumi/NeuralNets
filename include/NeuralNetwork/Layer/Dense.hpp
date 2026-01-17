@@ -28,8 +28,8 @@ public:
         T* wData = weights.Flatten();
         T* bData = bias.Flatten();
         
-        std::random_device rd;
-        std::default_random_engine generator(rd());
+        // Use fixed seed for reproducibility
+        std::default_random_engine generator(42);
         T std_dev;
 
         if (technique == WeightInit::Xavier) {
