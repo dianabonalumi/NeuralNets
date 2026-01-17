@@ -27,7 +27,7 @@ public:
         const int in_shape, const int bottleneck_shape, const int hidden_state,
         const int window_size, const int stride): loss_(loss), 
         enc(solver, optimizer, window_size, stride, in_shape, bottleneck_shape, hidden_state),
-        dec(solver, optimizer, bottleneck_shape, in_shape, hidden_state) {
+        dec(solver, optimizer, bottleneck_shape, in_shape) {
         }
 
     Matrix<T> Predict(const Matrix<T>& X) {
