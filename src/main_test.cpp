@@ -11,8 +11,6 @@
 
 #include "../include/factory_m.hpp"
 
-#define NUM_EPOCHS 50
-
 // g++ src/main.cpp -mavx -mfma -mavx2 -fopenmp -lpthread -o main
 
 void printMatrix(Matrix<float> m) {
@@ -52,6 +50,7 @@ void test(std::shared_ptr<Autoencoder<float>>& arch, DataLoader<float>& data_tes
 }
 
 void plot_data(std::shared_ptr<Autoencoder<float>>& arch, DataLoader<float>& data_test) {
+    data_test.shuffle();
     for(int i = 0;i < 5;i++) {
         Matrix<float> X = data_test.getBatch().first;
 
@@ -78,7 +77,11 @@ int main() {
     std::shared_ptr<Autoencoder<float>> arch = std::make_shared<Autoencoder<float>>(
         solver, optim, loss, 140, 30, 128, 40, 20);
 
-    arch->Restore("models/best");
+    std::cout << "Restoring model" << std::endl;
+    if (!arch->Restore("models/best")) {
+        std::cerr << "Failed to restore model - aborting" << std::endl;
+        return 1;
+    }
     std::cout << "Model restored" << std::endl;
     
     DataLoader<float> data_test(1);
