@@ -1,8 +1,6 @@
 # Loss Functions Module
 
-This module defines the **Loss Functions** used by the Neural Network to evaluate prediction errors and calculate the gradients necessary for learning.
-
-The module relies on efficient memory management provided by the `Matrix` class.
+This module defines the **Loss Functions** used by the Neural Network to evaluate prediction errors and calculate the gradients necessary for learning. It relies on efficient memory management provided by the `Matrix` class.
 
 ## Module Structure
 
@@ -10,12 +8,13 @@ The contents of the `include/NeuralNetwork/Loss/` directory are as follows:
 
 * **`Loss.hpp`**: Abstract Interface (Template Class).
 * **`MSE.hpp`**: Mean Squared Error implementation.
+* **`CrossEntropy.hpp`**: Categorical Cross-Entropy implementation.
 * **`README.md`**: This documentation.
 
-
+---
 
 ## Class Details
-git 
+
 ### 1. Base Interface: `Loss.hpp`
 This is the parent class from which all error metrics inherit.
 * **Type:** Abstract Class (Template `<typename T>`).
@@ -24,36 +23,38 @@ This is the parent class from which all error metrics inherit.
     * `Compute()`: Calculates the scalar error (Forward pass).
     * `Gradient()`: Calculates the derivative of the error with respect to the output (Backward pass).
 
+---
+
 ### 2. Implementation: `MSE.hpp` (Mean Squared Error)
-This class implements the mathematical logic for regression problems.
+Optimized for regression problems where the goal is to minimize the distance between continuous values.
 
 #### Mathematical Logic
-The class handles two fundamental steps:
+$$L = \frac{1}{2N} \sum (y_{pred} - y_{target})^2$$
 
-**A. Forward Pass (Loss Calculation)**
-Calculates the sum of squared errors. A scaling factor of 0.5 is applied to simplify the subsequent derivative.
+* **Forward Pass:** Calculates the sum of squared errors. A scaling factor of $0.5$ is applied to simplify the derivative.
+* **Backward Pass:** The derivative becomes linear: $\frac{\partial L}{\partial y_{pred}} = \frac{1}{N}(y_{pred} - y_{target})$.
 
+---
 
+### 3. Implementation: `CrossEntropy.hpp`
+Typically used for classification tasks or probability distribution matching.
 
-**B. Backward Pass (Gradient Calculation)**
-Calculates the partial derivative with respect to the prediction to initiate Backpropagation. Thanks to the 0.5 factor, the derivative becomes linear:
+#### Mathematical Logic
+$$L = -\frac{1}{N} \sum [y_{target} \cdot \log(y_{pred} + \epsilon)]$$
 
-
+* **Numerical Stability:** Incorporates an $\epsilon$ (epsilon) constant ($10^{-9}$) to prevent $log(0)$ errors, which would result in undefined values.
+* **Forward Pass:** Calculates the average logarithmic loss across the batch.
+* **Backward Pass:** Computes the gradient: $\frac{\partial L}{\partial y_{pred}} = -\frac{1}{N} \cdot \frac{y_{target}}{y_{pred} + \epsilon}$.
 
 #### Memory Management
-The `MSE` class internally stores the `lastX` (predictions) and `lastY` (target) matrices during the Forward pass, which are required to calculate the gradient in the Backward pass.
+Like the MSE implementation, this class stores `lastX` (predictions) and `lastY` (targets) to perform the gradient calculation efficiently without re-computing the forward pass.
 
 ---
 
 ## External Dependencies: `Matrix.hpp`
 
-Although `Matrix.hpp` is located in the parent directory (`include/Matrix.hpp`), it is the fundamental component upon which this module is based.
+The `Loss` module leverages the following features of the `Matrix<T>` class:
 
-The `Loss` and `MSE` classes use `Matrix<T>` for all data operations. Key features of `Matrix.hpp` leveraged here include:
-
-1.  **Resource Management (Rule of Five):**
-    The `Matrix` class handles memory allocation and deallocation (RAII). This is crucial for `MSE`, which must save copies of matrices (`lastX`, `lastY`) without causing memory leaks or double-free errors.
-    
-2.  **Data Access:**
-    Element access occurs via `Get(r, c)`, which maps 2D coordinates onto a contiguous 1D array to maximize CPU *cache locality* during error calculation loops.
-
+1.  **Resource Management (Rule of Five):** The `Matrix` class handles RAII memory management, allowing `CrossEntropy` and `MSE` to store copies of input data safely.
+2.  **Cache Locality:** By using `Flatten()`, the module accesses data as a contiguous 1D array, significantly improving performance by utilizing the CPU cache during large summation loops.
+3.  **Exception Safety:** Includes checks to ensure that `prediction` and `target` matrices share identical dimensions before calculation.
