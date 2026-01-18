@@ -2,8 +2,13 @@
 
 ## Project Goal
 
+### Hands-on
+
 The **main objective** of this project is to implement and benchmark highly **efficient and parallel Matrix Multiplication** routines from scratch using modern C++.\
 The **Feed-Forward Neural Network (FFNN)** serves as the critical application platform where the performance and scalability of these custom solvers are rigorously tested during the training and inference processes.
+
+### Project extension
+The objective for the extension of the project is to implement components for a **neural network** library. The library is then used to implement an **autoencoder** and use it to perform **anomaly detection** on an ECG dataset to classify normal and abnormal signals.
 
 ## How to Run the Code
 
@@ -15,15 +20,13 @@ The **Feed-Forward Neural Network (FFNN)** serves as the critical application pl
 * AVX/AVX2/FMA
 * Optional: python (Pandas) for preprocessing
 
-### Build and Run Instructions
-
-#### Optional (to perform our same testing procedure)
+### Build and Run Instructions (for the project extension)
 1. Download the dataset, move it to the *dataset* folder and unzip it \
-https://www.kaggle.com/datasets/camnugent/california-housing-prices
+https://www.timeseriesclassification.com/description.php?Dataset=ECG5000
 
 2. Run the preprocessor in the *dataset* folder to obtain processed data 
 ```bash
-python dataset/Preprocessor.py
+python dataset2/preprocessor.py
 ```
 
 #### To run the program
@@ -45,7 +48,10 @@ Training Feed-Forward Neural Networks typically involves [backpropagation](http:
 
 ## Architecture
 
-The software architecture translates the mathematical formulation into a modular design. It separates the **neural network** components from the **matrix solver** responsible for matrix products. It also ensure extensibility through abstract base classes for all major components: Architecture, Layer, Loss, and Matrix_Solver.
+The software architecture translates the mathematical formulation into a modular design. It separates the **neural network** components from the **matrix solver** responsible for matrix products. It also ensure extensibility through abstract base classes for all major components: Architecture, Layer, Loss, Optimizer and Matrix_Solver.
+- Red components are **neural network** components for the hands-on
+- Blue components are **matrix multiplication** components for the hands-on
+- Green components are **neural network** components for the extension
 
 ![Architecture](.github/assets/architecture.png)
 
@@ -53,17 +59,20 @@ The software architecture translates the mathematical formulation into a modular
 
 Mirroring the **architecture**, the file structure is also designed to separate the **neural network** from the **matrix solver** implementations.
 
-**Note: Each folder contains its own `README.md` with a detailed explanation of its contents.**
+**Note: Each folder in the include/NeuralNetwork section contains its own `README.md` with a detailed explanation of its contents.**
 
 ```
 NeuralNets
-|-- dataset
-|  |-- Preprocess.py
+|-- dataset2
+|  |-- preprocess.py
 |  \-- dataset .csv files
 |-- include
 |  |-- NeuralNetwork
 |  |  |-- Architecture
 |  |  |  |-- Architecture.hpp
+|  |  |  |-- Autoencoder.hpp
+|  |  |  |-- Encoder.hpp
+|  |  |  |-- Decoder.hpp
 |  |  |  \-- FeedForward.hpp
 |  |  |-- DataLoader
 |  |  |  \-- DataLoader.hpp
@@ -71,10 +80,21 @@ NeuralNets
 |  |  |  |-- Layer.hpp
 |  |  |  |-- Dense.hpp
 |  |  |  |-- ReLu.hpp
+|  |  |  |-- CNN1D.hpp
+|  |  |  |-- LSTM.hpp
+|  |  |  |-- MaxPooling1D.hpp
+|  |  |  |-- WeightInitialization.hpp
+|  |  |  |-- Softmax.hpp
 |  |  |  \-- Sigmoid.hpp
 |  |  |-- Loss
 |  |  |  |-- Loss.hpp
-|  |  |  |-- MSE.hpp
+|  |  |  |-- CrossEntropy.hpp
+|  |  |  \-- MSE.hpp
+|  |  |-- Optimizer
+|  |  |  |-- Optimizer.hpp
+|  |  |  |-- GradientDescent.hpp
+|  |  |  |-- Adam.hpp
+|  |  |  |-- AdamW.hpp
 |  |  \-- Matrix.hpp
 |  |-- repo_mtx
 |  |  \-- Report folders
@@ -87,15 +107,25 @@ NeuralNets
    \-- main.cpp
 ```
 
-## Neural Network Training Results
-Training the Feed-Forward Neural Network resulted in a clear sign of convergence. The blue line represents training loss, while the orange line represents validation loss. As shown in the graph, the Training Loss **consistently decreased over epochs**, while the Validation Loss closely followed it, even if some spikes appear in the graph. This outcome confirms the correct implementation of the entire neural network architecture, from data loading to the custom matrix multiplication engine.
+## Neural Network Architecture
 
-![Loss](.github/assets/loss.png)
+Using the tools developed above we implemented an **autoencoder**.\
+It is composed by:
+- Encoder: an **LSTM** followed by a **Dense** layer. We used the **sliding window** technique to pass pieces of the input signal to the LSTM. After processing the whole signal with the LSTM the last hidden state is passed to the Dense layer to reshape the vector to the size of the bottleneck.
+- Decoder: a **Dense** layer. It reconstructs the input signal based on the compressed representation.
 
-## Results
+![NeuralNet](.github/assets/autoencoder.png)
 
-The performance evaluation focused on measuring the speedup achieved by our custom optimized solvers against the base-line naive method on a fixed benchmark problem.
+## Reconstruction results
+Because of the small size of the dataset, the similarity of the **normal** signals and the single feature considered, the **autoencoder** quickly reaches a small loss (**MSE**) of under 10 in 3-5 iterations. If the training is performed for more epochs it can reach a training loss of under 3, but risks **overfitting** on the training data and fails to also reconstruct the validation data of the same class.
 
-While recognizing that ultimate performance does not yet match highly tuned, platform-specific libraries (like OpenBLAS), our custom C++ implementation achieved a significant performance gain.
+The following plots are the results of a model with a loss of: **4.59**
 
-![Results](.github/assets/results.png)
+![Plot](.github/assets/plots/normal.png)
+
+## Classification results
+The model can be used for **anomaly detection** because, having being trained only on a specific class (**normal**), it has not learned to reconstruct different kinds of **abnormal** classes. The previous model achieved an **F1 score** of **0.92** by classifing as anomalies values above **15MSE**. This shows it's ability to distinguish the different classes.
+
+In the following plot, the top-left reconstruction belongs to a **normal** signal, while the other three belong to **anomalies**. It can be clearly seen the **anomalies** have a greatly more noisy reconstruction.
+
+![Classifier](.github/assets/plots/classifier.png)
