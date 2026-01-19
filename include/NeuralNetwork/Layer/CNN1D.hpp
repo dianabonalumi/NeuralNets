@@ -30,8 +30,8 @@ public:
         size_t total_weights = (size_t)(out_channels_ * kernel_size_ * in_channels_);
         T* wData = weights.Flatten();
         
-        std::random_device rd;
-        std::default_random_engine generator(rd());
+        // Use fixed seed for reproducibility
+        std::default_random_engine generator(42);
         T std_dev;
 
         if (technique == WeightInit::Xavier) {
