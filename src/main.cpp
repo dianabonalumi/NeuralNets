@@ -189,7 +189,12 @@ void classify(std::shared_ptr<Autoencoder<float>>& arch, DataLoader<float>& data
 }
 
 int main() {
-    std::shared_ptr<Matrix_Solver<float>> solver = std::move(SolverFactory<float>::createSolver(SolverType::ALL));
+    // Set global seed for reproducibility
+    unsigned global_seed = 42;
+    srand(global_seed);
+    std::srand(global_seed);
+
+    std::shared_ptr<Matrix_Solver<float>> solver = std::move(SolverFactory<float>::createSolver(SolverType::NAIVE));
 
     DataLoader<float> data_train(1);
     data_train.loadCSV("dataset2/train.csv", "dataset2/train_labels.csv");
