@@ -35,9 +35,9 @@ public:
         T std_dev;
 
         if (technique == WeightInit::Xavier) {
-            std_dev = std::sqrt(static_cast<T>(2.0) / (out_channels_ + kernel_size_ * in_channels_));
+            std_dev = std::sqrt(static_cast<T>(2.0) / (out_channels_ + (kernel_size_ * in_channels_)));
         } else { 
-            std_dev = std::sqrt(static_cast<T>(2.0) / kernel_size_ * in_channels_);
+            std_dev = std::sqrt(static_cast<T>(2.0) / (kernel_size_ * in_channels_));
         }
 
         std::normal_distribution<T> distribution(static_cast<T>(0.0), std_dev);
