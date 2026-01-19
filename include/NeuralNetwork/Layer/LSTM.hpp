@@ -244,55 +244,6 @@ public:
         history.clear(); 
         return dx_sequence[0]; 
     }
-
-    T* Serialize() {
-        size_t w_len = W_all.rows() * W_all.cols();
-        size_t u_len = U_all.rows() * U_all.cols();
-        size_t b_len = b_all.rows() * b_all.cols();
-        size_t total_len = w_len + u_len + b_len;
-        
-        T* buffer = new T[total_len + 1];
-        buffer[0] = static_cast<T>(total_len);
-        
-        T* w_data = W_all.Flatten();
-        T* u_data = U_all.Flatten();
-        T* b_data = b_all.Flatten();
-        
-        if (!w_data || !u_data || !b_data) {
-            std::cerr << "Error: LSTM weight data is null during serialization" << std::endl;
-            delete[] buffer;
-            return nullptr;
-        }
-        
-        std::copy(w_data, w_data + w_len, buffer + 1);
-        std::copy(u_data, u_data + u_len, buffer + 1 + w_len);
-        std::copy(b_data, b_data + b_len, buffer + 1 + w_len + u_len);
-        return buffer;
-    }
-
-    void Deserialize(T* data) {
-        if (!data) {
-            std::cerr << "Error: LSTM deserialization data is null" << std::endl;
-            return;
-        }
-        
-        size_t w_len = W_all.rows() * W_all.cols();
-        size_t u_len = U_all.rows() * U_all.cols();
-        size_t b_len = b_all.rows() * b_all.cols();
-        
-        T* w_data = W_all.Flatten();
-        T* u_data = U_all.Flatten();
-        T* b_data = b_all.Flatten();
-        
-        if (!w_data || !u_data || !b_data) {
-            std::cerr << "Error: Cannot get LSTM weights for deserialization" << std::endl;
-            return;
-        }
-        
-        std::copy(data + 1, data + 1 + w_len, w_data);
-        std::copy(data + 1 + w_len, data + 1 + w_len + u_len, u_data);
-        std::copy(data + 1 + w_len + u_len, data + 1 + w_len + u_len + b_len, b_data);
-    }
 };
 
 #endif

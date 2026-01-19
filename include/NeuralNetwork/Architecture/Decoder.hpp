@@ -52,18 +52,6 @@ public:
 
         return g;
     }
-
-    T* Serialize() {
-        T* dense_data = dense_layer_.Serialize();
-        
-        return dense_data;
-    }
-
-    void Deserialize(T* data) {
-        if (!data) return;
-        
-        dense_layer_.Deserialize(data);
-    }
 };
 
 #endif

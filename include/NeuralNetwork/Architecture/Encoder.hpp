@@ -95,52 +95,6 @@ public:
 
         return g;
     }
-
-    T* Serialize() {
-        // Serialize LSTM then Dense
-        T* lstm_data = lstm_layer_.Serialize();
-        T* dense_data = dense_layer_.Serialize();
-        
-        size_t lstm_size = static_cast<size_t>(lstm_data[0]) + 1;
-        size_t dense_size = static_cast<size_t>(dense_data[0]) + 1;
-        size_t total_size = lstm_size + dense_size;
-        
-        T* buffer = new T[total_size + 1];
-        buffer[0] = static_cast<T>(total_size);
-        
-        // Copy LSTM data
-        for(size_t i = 0; i < lstm_size; ++i) {
-            buffer[i + 1] = lstm_data[i];
-        }
-        
-        // Copy Dense data
-        for(size_t i = 0; i < dense_size; ++i) {
-            buffer[lstm_size + i + 1] = dense_data[i];
-        }
-        
-        delete[] lstm_data;
-        delete[] dense_data;
-        
-        return buffer;
-    }
-
-    void Deserialize(T* data) {
-        if (!data) return;
-        
-        size_t lstm_size = static_cast<size_t>(data[1]) + 1;
-        
-        // Deserialize LSTM
-        T* lstm_buffer = new T[lstm_size];
-        for(size_t i = 0; i < lstm_size; ++i) {
-            lstm_buffer[i] = data[i + 1];
-        }
-        lstm_layer_.Deserialize(lstm_buffer);
-        delete[] lstm_buffer;
-        
-        // Deserialize Dense
-        T* dense_buffer = &data[lstm_size + 1];
-        dense_layer_.Deserialize(dense_buffer);
-    }
 };
 
 #endif
