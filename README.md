@@ -119,12 +119,12 @@ It is composed by:
 ## Reconstruction results
 Because of the small size of the dataset, the similarity of the **normal** signals and the single feature considered, the **autoencoder** quickly reaches a small loss (**MSE**) of under 10 in 3-5 iterations. If the training is performed for more epochs it can reach a training loss of under 3, but risks **overfitting** on the training data and fails to also reconstruct the validation data of the same class.
 
-The following plots are the results of a model with a loss of: **4.59**
+The following plots are the results of a model with a test loss of: **6.13357**
 
 ![Plot](.github/assets/plots/normal.png)
 
 ## Classification results
-The model can be used for **anomaly detection** because, having being trained only on a specific class (**normal**), it has not learned to reconstruct different kinds of **abnormal** classes. The previous model achieved an **F1 score** of **0.92** by classifing as anomalies values above **15MSE**. This shows it's ability to distinguish the different classes.
+The model can be used for **anomaly detection** because, having being trained only on a specific class (**normal**), it has not learned to reconstruct different kinds of **abnormal** classes. The previous model achieved an **F1 score** of **0.919275** by classifing as anomalies values above **15MSE**. This shows it's ability to distinguish the different classes.
 
 In the following plot, the top-left reconstruction belongs to a **normal** signal, while the other three belong to **anomalies**. It can be clearly seen the **anomalies** have a greatly more noisy reconstruction.
 
