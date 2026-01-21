@@ -4,18 +4,18 @@ import numpy as np
 
 # %%
 # file is in arff format
-with open("ECG5000/ECG5000_TRAIN.arff", "r") as f:
+with open("dataset2/ECG5000/ECG5000_TRAIN.arff", "r") as f:
     train = f.readlines()
 
-with open("ECG5000/ECG5000_TEST.arff", "r") as f:
+with open("dataset2/ECG5000/ECG5000_TEST.arff", "r") as f:
     test = f.readlines()
 
-with open("ECG5000.csv", "w") as f:
+with open("dataset2/ECG5000.csv", "w") as f:
     f.writelines(train[145:])
     f.writelines(test[145:])
 
 # %%
-data = pd.read_csv("ECG5000.csv", header=None)
+data = pd.read_csv("dataset2/ECG5000.csv", header=None)
 data.describe()
 
 # %%
@@ -41,12 +41,12 @@ data_val = data_normal.iloc[train_val_test_split[train_size:train_size+val_size]
 data_test = data_normal.iloc[train_val_test_split[train_size+val_size:]]
 
 # %%
-data_train.drop(140, axis=1).to_csv("train.csv", index=None)
-data_train[140].to_csv("train_labels.csv", index=None)
-data_val.drop(140, axis=1).to_csv("val.csv", index=None)
-data_val[140].to_csv("val_labels.csv", index=None)
-data_test.drop(140, axis=1).to_csv("test.csv", index=None)
-data_test[140].to_csv("test_labels.csv", index=None)
+data_train.drop(140, axis=1).to_csv("dataset2/train.csv", index=None)
+data_train[140].to_csv("dataset2/train_labels.csv", index=None)
+data_val.drop(140, axis=1).to_csv("dataset2/val.csv", index=None)
+data_val[140].to_csv("dataset2/val_labels.csv", index=None)
+data_test.drop(140, axis=1).to_csv("dataset2/test.csv", index=None)
+data_test[140].to_csv("dataset2/test_labels.csv", index=None)
 
 # %% [markdown]
 # Generate classifier dataset
@@ -62,7 +62,7 @@ data_class = data_class.append(data[data[140] != 1])
 data_class[140].value_counts()
 
 # %%
-data_class.drop(140, axis=1).to_csv("test_classifier.csv", index=None)
-data_class[140].to_csv("test_classifier_labels.csv", index=None)
+data_class.drop(140, axis=1).to_csv("dataset2/test_classifier.csv", index=None)
+data_class[140].to_csv("dataset2/test_classifier_labels.csv", index=None)
 
 
