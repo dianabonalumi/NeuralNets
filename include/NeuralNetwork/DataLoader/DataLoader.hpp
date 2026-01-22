@@ -199,7 +199,8 @@ public:
         }
         
         // Use a high-quality random number generator engine
-        unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+        //unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+        unsigned seed = 42;
         std::default_random_engine engine(seed);
         
         // Shuffle the indices vector

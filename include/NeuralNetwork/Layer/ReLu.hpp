@@ -11,10 +11,10 @@ private:
 
 public:
     // Constructor
-    ReLU(std::shared_ptr<Matrix_Solver<T>> solver) : Layer<T>(solver) {}
+    ReLU(const std::shared_ptr<Matrix_Solver<T>>& solver) : Layer<T>(solver) {}
 
     // Forward Pass: f(x) = max(0, x)
-    Matrix<T> Forward(const Matrix<T> X) override {
+    Matrix<T> Forward(const Matrix<T>& X) override {
         lastInput = X;
         
         size_t r = X.rows();
@@ -32,8 +32,7 @@ public:
         return output;
     }
 
-    // Backward Pass: Derivative is 1 if x > 0, else 0
-    Matrix<T> Backward(const Matrix<T> grad, T learning_rate) override {
+    Matrix<T> Backward(const Matrix<T>& grad) override { // Rimosso learning_rate
         size_t r = grad.rows();
         size_t c = grad.cols();
         Matrix<T> inputGrad(r, c);
@@ -44,14 +43,13 @@ public:
         size_t size = r * c;
 
         for(size_t i = 0; i < size; ++i) {
-            if (inData[i] > 0) {
-                resultData[i] = gradData[i]; // Pass through
-            } else {
-                resultData[i] = 0;           // Block gradient
-            }
+            // Derivata: 1 se x > 0, altrimenti 0
+            resultData[i] = (inData[i] > 0) ? gradData[i] : static_cast<T>(0);
         }
         return inputGrad;
     }
+
+    void WeightInitialization(const WeightInit& technique) override {} // Layer senza pesi
 };
 
 #endif

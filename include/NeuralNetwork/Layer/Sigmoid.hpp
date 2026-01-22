@@ -10,9 +10,9 @@ private:
     Matrix<T> lastOutput; // Cache for backward pass
 
 public:
-    Sigmoid(std::shared_ptr<Matrix_Solver<T>> solver): Layer<T>(solver) {}
+    Sigmoid(const std::shared_ptr<Matrix_Solver<T>>& solver): Layer<T>(solver) {}
 
-    Matrix<T> Forward(const Matrix<T> X) override {
+    Matrix<T> Forward(const Matrix<T>& X) override {
         size_t r = X.rows();
         size_t c = X.cols();
         Matrix<T> output(r, c);
@@ -30,7 +30,7 @@ public:
         return output;
     }
 
-    Matrix<T> Backward(const Matrix<T> grad, T learning_rate) override {
+    Matrix<T> Backward(const Matrix<T>& grad) override { // Rimosso learning_rate
         size_t r = grad.rows();
         size_t c = grad.cols();
         Matrix<T> inputGrad(r, c);
@@ -42,12 +42,13 @@ public:
 
         for(size_t i = 0; i < size; ++i) {
             T sig = outData[i];
-            // Derivative: f'(x) = f(x) * (1 - f(x))
+            // Derivata: f(x) * (1 - f(x))
             resultData[i] = gradData[i] * (sig * (1.0 - sig));
         }
-
         return inputGrad;
     }
+
+    void WeightInitialization(const WeightInit& technique) override {} // Layer senza pesi
 };
 
 #endif
